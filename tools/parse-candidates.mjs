@@ -24,5 +24,8 @@ export function parseCandidates(mdText, fileName = '') {
     const field = line.match(/^-\s*([^:：]+?)\s*[:：]\s*(.*)$/);
     if (field && FIELD_MAP[field[1]]) current[FIELD_MAP[field[1]]] = field[2].trim();
   }
-  return { date, items };
+  const candidates = items.filter((item) =>
+    Object.values(FIELD_MAP).some((key) => item[key] !== '')
+  );
+  return { date, items: candidates };
 }

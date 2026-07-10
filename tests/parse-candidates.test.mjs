@@ -40,3 +40,16 @@ test('番号なし見出しでも名前が取れる', () => {
   assert.equal(items[0].name, 'Team Bub.');
   assert.equal(items[0].skills, '');
 });
+
+test('フィールドを持たないまとめ見出しは候補に含めない', () => {
+  const md = `## 1. HARA（原寛樹）
+- カテゴリ: Other（Magician / Illusionist）
+- URL: https://www.hirokihara.com/
+
+## 注意事項
+本リストはWeb検索による一次調査であり、最終確認を推奨します。
+`;
+  const { items } = parseCandidates(md);
+  assert.equal(items.length, 1);
+  assert.equal(items[0].name, 'HARA（原寛樹）');
+});
