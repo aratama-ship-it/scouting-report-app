@@ -118,8 +118,25 @@ function renderHistory() {
       ? el('div', { class: 'muted' }, '変更なし') : '')));
 }
 function renderDashboard() {
+  const entries = Object.entries(DATA.stats.byBase);
+  const max = Math.max(...entries.map(([, n]) => n), 1);
   $('#view').replaceChildren(
-    el('p', { class: 'muted' }, `集計 ${DATA.stats.total}名（実装予定）`));
+    el('div', { class: 'card' },
+      el('h3', {}, '登録数'),
+      el('p', { class: 'big-number' },
+        String(DATA.stats.total),
+        el('span', { class: 'muted' }, ` 組（${DATA.roster.date} 時点）`))),
+    el('div', { class: 'card' },
+      el('h3', {}, 'カテゴリ別'),
+      entries.map(([base, n]) => el('div', { class: 'bar-row' },
+        el('span', {}, base),
+        el('div', {},
+          el('div', { class: 'bar', style: `width:${Math.round((n / max) * 100)}%` })),
+        el('span', { class: 'muted' }, String(n))))),
+    el('div', { class: 'card' },
+      el('h3', {}, '手薄ジャンル（要スカウト）'),
+      el('p', { class: 'muted' },
+        'マジック／ファイアー／台系アクロバット／バブル／スティルト／腹話術／MC・ホスト など。最新の候補は「候補」タブへ。')));
 }
 const VIEWS = { roster: renderRoster, candidates: renderCandidates,
   history: renderHistory, dashboard: renderDashboard };
