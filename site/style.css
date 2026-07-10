@@ -3,6 +3,7 @@
   --accent: #d4a24e; --line: #33363f; --danger: #d46a5f; --ok: #7fb069;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body { margin: 0; background: var(--bg); color: var(--text);
   font-family: "Hiragino Sans", "Noto Sans JP", sans-serif; }
 .lock { min-height: 100vh; display: grid; place-items: center; padding: 16px; }
