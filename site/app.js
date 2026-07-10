@@ -76,12 +76,46 @@ function renderRoster() {
   update();
 }
 function renderCandidates() {
-  $('#view').replaceChildren(
-    el('p', { class: 'muted' }, `候補 ${DATA.candidates.length}週分（実装予定）`));
+  if (DATA.candidates.length === 0) {
+    $('#view').replaceChildren(el('p', { class: 'muted' }, '候補データはまだありません'));
+    return;
+  }
+  const rosterNames = new Set(DATA.roster.performers.map((p) => p.name));
+  $('#view').replaceChildren(...DATA.candidates.flatMap((week) => [
+    el('h2', { class: 'muted' }, `${week.date} の新規候補（${week.items.length}件）`),
+    ...week.items.map((c) => el('div', { class: 'card' },
+      el('h3', {},
+        c.name, ' ',
+        el('span', { class: 'tag' }, c.category),
+        rosterNames.has(c.name)
+          ? el('span', { class: 'tag diff-added' }, 'シート追記済み')
+          : el('span', { class: 'tag' }, '未追記')),
+      el('div', { class: 'muted' }, c.skills + (c.size ? ` ／ 人数: ${c.size}` : '')),
+      c.reason ? el('div', { class: 'muted' }, `💡 ${c.reason}`) : '',
+      c.status ? el('div', { class: 'muted' }, `✔️ ${c.status}`) : '',
+      el('div', { class: 'links' }, link(c.url, '公式サイト')))),
+  ]));
 }
 function renderHistory() {
-  $('#view').replaceChildren(
-    el('p', { class: 'muted' }, `履歴 ${DATA.history.length}件（実装予定）`));
+  if (DATA.history.length === 0) {
+    $('#view').replaceChildren(el('p', { class: 'muted' },
+      '履歴はまだありません（スナップショットが2週分たまると表示されます）'));
+    return;
+  }
+  $('#view').replaceChildren(...DATA.history.map((w) => el('div', { class: 'card' },
+    el('h3', {}, `${w.prevDate} → ${w.date}`),
+    w.added.length ? el('div', { class: 'diff-added' },
+      `＋ 追加 (${w.added.length}): ${w.added.map((p) => p.name).join('、')}`) : '',
+    w.removed.length ? el('div', { class: 'diff-removed' },
+      `− 削除 (${w.removed.length}): ${w.removed.map((p) => p.name).join('、')}`) : '',
+    w.changed.length ? [
+      el('div', { class: 'muted' }, `✎ 変更 (${w.changed.length}):`),
+      w.changed.map((c) => el('div', { class: 'muted' },
+        `・${c.name}: ` + c.fields.map((f) =>
+          `${f.field}「${f.from}」→「${f.to}」`).join(' / '))),
+    ] : '',
+    !w.added.length && !w.removed.length && !w.changed.length
+      ? el('div', { class: 'muted' }, '変更なし') : '')));
 }
 function renderDashboard() {
   $('#view').replaceChildren(
