@@ -164,7 +164,7 @@ async function init() {
   });
 
   try {
-    const res = await fetch('data/data.enc');
+    const res = await fetch('data/data.enc', { cache: 'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     ENVELOPE = await res.json();
   } catch {
