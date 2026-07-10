@@ -171,6 +171,14 @@ async function init() {
     }
   });
 
+  $('#pass-toggle').addEventListener('click', () => {
+    const pass = $('#pass');
+    const showing = pass.type === 'text';
+    pass.type = showing ? 'password' : 'text';
+    $('#pass-toggle').textContent = showing ? '👁' : '🙈';
+    $('#pass-toggle').setAttribute('aria-label', showing ? '合言葉を表示' : '合言葉を隠す');
+  });
+
   $('#tabs').addEventListener('click', (e) => {
     if (e.target.dataset.view) showView(e.target.dataset.view);
   });

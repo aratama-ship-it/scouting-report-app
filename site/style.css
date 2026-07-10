@@ -11,8 +11,13 @@ body { margin: 0; background: var(--bg); color: var(--text);
   padding: 32px; width: 100%; max-width: 360px; text-align: center; }
 .lock-card h1 { margin: 0 0 8px; font-size: 20px; color: var(--accent); }
 .lock-card p { color: var(--muted); font-size: 13px; }
-.lock-card input { width: 100%; padding: 10px; margin: 12px 0; border-radius: 8px;
+.pass-row { position: relative; margin: 12px 0; }
+.pass-row input { width: 100%; padding: 10px 44px 10px 10px; margin: 0; border-radius: 8px;
   border: 1px solid var(--line); background: var(--bg); color: var(--text); font-size: 16px; }
+#pass-toggle { position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+  width: 34px; height: 34px; padding: 0; border: none; background: none; color: var(--muted);
+  font-size: 16px; cursor: pointer; border-radius: 6px; }
+#pass-toggle:hover { color: var(--text); }
 .lock-card button { width: 100%; padding: 10px; border: none; border-radius: 8px;
   background: var(--accent); color: #14151a; font-weight: 700; font-size: 15px; cursor: pointer; }
 .error { color: var(--danger); }
