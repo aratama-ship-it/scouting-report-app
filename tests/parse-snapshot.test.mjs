@@ -8,8 +8,8 @@ const SAMPLE = `# スカウティング名簿 スナップショット 2026-07-0
 
 | 名前 | Size | Base | Skills | Instagram | Youtube | Contact | Note |
 |---|---|---|---|---|---|---|---|
-| Zeroko | 2 | Clown | comedy / clowning | https://instagram.com/zeroko_jp/ | https://youtube.com/zeroko_jp | | |
-| Sax Samurai | 1 | Musician | Saxophone | https://instagram.com/saxsamurai/ | | https://www.saxsamurai.nagoya | |
+| Hoshizora Piero | 2 | Clown | comedy / clowning | https://instagram.com/hoshizora_piero/ | https://youtube.com/hoshizora_piero | | |
+| Tsukikage Duo | 1 | Musician | Shamisen | https://instagram.com/tsukikage_duo/ | | https://example.com/tsukikage | |
 `;
 
 test('テーブル行をPerformerとして抽出する', () => {
@@ -17,9 +17,9 @@ test('テーブル行をPerformerとして抽出する', () => {
   assert.equal(date, '2026-07-06');
   assert.equal(performers.length, 2);
   assert.deepEqual(performers[0], {
-    name: 'Zeroko', size: '2', base: 'Clown', skills: 'comedy / clowning',
-    instagram: 'https://instagram.com/zeroko_jp/',
-    youtube: 'https://youtube.com/zeroko_jp', contact: '', note: '',
+    name: 'Hoshizora Piero', size: '2', base: 'Clown', skills: 'comedy / clowning',
+    instagram: 'https://instagram.com/hoshizora_piero/',
+    youtube: 'https://youtube.com/hoshizora_piero', contact: '', note: '',
   });
 });
 

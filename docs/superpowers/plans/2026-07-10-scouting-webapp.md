@@ -183,8 +183,8 @@ const SAMPLE = `# スカウティング名簿 スナップショット 2026-07-0
 
 | 名前 | Size | Base | Skills | Instagram | Youtube | Contact | Note |
 |---|---|---|---|---|---|---|---|
-| Zeroko | 2 | Clown | comedy / clowning | https://instagram.com/zeroko_jp/ | https://youtube.com/zeroko_jp | | |
-| Sax Samurai | 1 | Musician | Saxophone | https://instagram.com/saxsamurai/ | | https://www.saxsamurai.nagoya | |
+| Hoshizora Piero | 2 | Clown | comedy / clowning | https://instagram.com/hoshizora_piero/ | https://youtube.com/hoshizora_piero | | |
+| Tsukikage Duo | 1 | Musician | Shamisen | https://instagram.com/tsukikage_duo/ | | https://example.com/tsukikage | |
 `;
 
 test('テーブル行をPerformerとして抽出する', () => {
@@ -192,9 +192,9 @@ test('テーブル行をPerformerとして抽出する', () => {
   assert.equal(date, '2026-07-06');
   assert.equal(performers.length, 2);
   assert.deepEqual(performers[0], {
-    name: 'Zeroko', size: '2', base: 'Clown', skills: 'comedy / clowning',
-    instagram: 'https://instagram.com/zeroko_jp/',
-    youtube: 'https://youtube.com/zeroko_jp', contact: '', note: '',
+    name: 'Hoshizora Piero', size: '2', base: 'Clown', skills: 'comedy / clowning',
+    instagram: 'https://instagram.com/hoshizora_piero/',
+    youtube: 'https://youtube.com/hoshizora_piero', contact: '', note: '',
   });
 });
 
@@ -289,19 +289,19 @@ const SAMPLE = `# 新規候補リスト 2026-07-06（週次スカウティング
 
 ---
 
-## 1. HARA（原寛樹）
+## 1. カゲロウ（Kagerou）
 - カテゴリ: Other（Magician / Illusionist）
 - 人数: 1
 - スキル: イリュージョン、大道具マジック
-- URL: https://www.hirokihara.com/
+- URL: https://example.com/kagerou
 - 推薦理由: AGT出演実績あり。
 - 確認状況: 公式サイトあり（**要確認**）。
 
-## 2. 火付盗賊（Hitsuketouzoku）
+## 2. 月光サーカス団（Gekko Circus）
 - カテゴリ: Physical Circus（Fire / Juggling group）
 - 人数: 5+（推定、要確認）
 - スキル: 炎と光のジャグリング
-- URL: https://fireshowjapan.com/firebandit/
+- URL: https://example.com/gekko
 - 推薦理由: 屋外火・屋内LED両対応。
 - 確認状況: 公式サイトあり。
 `;
@@ -310,15 +310,15 @@ test('見出しごとに候補を抽出する', () => {
   const { date, items } = parseCandidates(SAMPLE, 'candidates_2026-07-06.md');
   assert.equal(date, '2026-07-06');
   assert.equal(items.length, 2);
-  assert.equal(items[0].name, 'HARA（原寛樹）');
+  assert.equal(items[0].name, 'カゲロウ（Kagerou）');
   assert.equal(items[0].category, 'Other（Magician / Illusionist）');
-  assert.equal(items[0].url, 'https://www.hirokihara.com/');
+  assert.equal(items[0].url, 'https://example.com/kagerou');
   assert.equal(items[1].size, '5+（推定、要確認）');
 });
 
 test('番号なし見出しでも名前が取れる', () => {
-  const { items } = parseCandidates('## Team Bub.\n- カテゴリ: Other\n');
-  assert.equal(items[0].name, 'Team Bub.');
+  const { items } = parseCandidates('## Team Awa.\n- カテゴリ: Other\n');
+  assert.equal(items[0].name, 'Team Awa.');
   assert.equal(items[0].skills, '');
 });
 ```
@@ -651,7 +651,7 @@ import('./tools/crypto.mjs').then(async ({ decrypt }) => {
   const payload = JSON.parse(await decrypt('test-pass-for-build', env));
   console.log('roster:', payload.roster.performers.length, 'candidates:', payload.candidates.length);
 });"
-grep -c 'Zeroko' site/data/data.enc || echo '平文リークなし OK'
+grep -c 'Hoshizora Piero' site/data/data.enc || echo '平文リークなし OK'
 ```
 Expected: 件数がStep 2と一致し、grepは0件（`平文リークなし OK`）
 
@@ -1092,10 +1092,10 @@ preview で確認:
 ```bash
 TMP=$(mktemp -d) && mkdir -p "$TMP/archive" "$TMP/candidates"
 cp ../scouting-report/archive/snapshot_2026-07-06.md "$TMP/archive/"
-sed 's/| Zeroko |/| Zeroko TEST |/' ../scouting-report/archive/snapshot_2026-07-06.md \
+sed 's/| Hoshizora Piero |/| Hoshizora Piero TEST |/' ../scouting-report/archive/snapshot_2026-07-06.md \
   > "$TMP/archive/snapshot_2026-07-07.md"
 SCOUT_SOURCE="$TMP" SCOUT_PASSPHRASE='test-pass-for-build' npm run build
-# → ブラウザリロード: 履歴タブに「＋追加: Zeroko TEST / −削除: Zeroko」が出ること
+# → ブラウザリロード: 履歴タブに「＋追加: Hoshizora Piero TEST / −削除: Hoshizora Piero」が出ること
 SCOUT_PASSPHRASE='test-pass-for-build' npm run build   # 実データで再ビルドして戻す
 rm -rf "$TMP"
 ```
