@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Scouting Report</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="lock" class="lock">
+  <form id="lock-form" class="lock-card">
+    <h1>Scouting Report</h1>
+    <p>チームの合言葉を入力してください</p>
+    <input id="pass" type="password" autocomplete="current-password" autofocus>
+    <button type="submit">開く</button>
+    <p id="lock-error" class="error" hidden>合言葉が違います</p>
+    <p id="lock-loading" hidden>復号中…</p>
+  </form>
+</div>
+<div id="app" hidden>
+  <header>
+    <h1>Scouting Report</h1>
+    <span id="meta"></span>
+    <button id="lock-btn" type="button">ロック</button>
+  </header>
+  <nav id="tabs">
+    <button data-view="roster" class="active">名簿</button>
+    <button data-view="candidates">候補</button>
+    <button data-view="history">履歴</button>
+    <button data-view="dashboard">集計</button>
+  </nav>
+  <main id="view"></main>
+</div>
+<script type="module" src="app.js"></script>
+</body>
+</html>
