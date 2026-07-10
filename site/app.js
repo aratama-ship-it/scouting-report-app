@@ -62,18 +62,11 @@ async function unlock(pass) {
 }
 
 async function init() {
-  const res = await fetch('data/data.enc').catch(() => null);
-  if (!res || !res.ok) {
-    $('#lock-form').replaceChildren(
-      el('p', { class: 'error' }, 'データを読み込めませんでした。再読み込みしてください。'));
-    return;
-  }
-  ENVELOPE = await res.json();
-
   $('#lock-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     $('#lock-error').hidden = true;
     $('#lock-loading').hidden = false;
+    if (!ENVELOPE) return; // データ読み込み前は復号中表示のまま待つ
     try {
       await unlock($('#pass').value);
     } catch {
@@ -90,6 +83,16 @@ async function init() {
     localStorage.removeItem(PASS_KEY);
     location.reload();
   });
+
+  try {
+    const res = await fetch('data/data.enc');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    ENVELOPE = await res.json();
+  } catch {
+    $('#lock-form').replaceChildren(
+      el('p', { class: 'error' }, 'データを読み込めませんでした。再読み込みしてください。'));
+    return;
+  }
 
   const saved = localStorage.getItem(PASS_KEY);
   if (saved) {
