@@ -21,10 +21,11 @@
 
 ```
 Googleシート（マスター、手動編集は今まで通り）
-   │  毎週月曜9:00の定期タスク（既存タスクを拡張）
+   │  毎週月曜9:00の定期タスク（既存タスクを拡張）:
+   │  Claudeがシートを読取り archive/snapshot_*.md と candidates/*.md を保存（現行運用）
    ▼
-データ生成スクリプト（Node、依存最小）
-   ├─ シート読取 → roster.json（名簿）
+データ生成スクリプト（Node、依存最小。入力は scouting-report/ のローカルmd）
+   ├─ 最新スナップショット → roster.json（名簿）
    ├─ 前回スナップショットと比較 → history.json（週次差分）
    ├─ candidates/*.md → candidates.json（新規候補）
    └─ 集計 → stats.json（カテゴリ別件数など）
