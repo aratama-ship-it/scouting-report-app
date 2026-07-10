@@ -26,9 +26,54 @@ export function link(url, label) {
 }
 
 // --- ビュー（Task 8〜10 で実装を差し替える） ---
+const rosterState = { q: '', base: '' };
+
+function performerCard(p) {
+  return el('div', { class: 'card' },
+    el('h3', {},
+      p.name, ' ',
+      el('span', { class: 'tag' }, p.base || '未分類'),
+      p.size && p.size !== '1' ? el('span', { class: 'tag' }, `${p.size}人`) : ''),
+    el('div', { class: 'muted' }, p.skills),
+    p.note ? el('div', { class: 'muted' }, `📝 ${p.note}`) : '',
+    el('div', { class: 'links' },
+      link(p.instagram, 'Instagram'),
+      link(p.youtube, 'YouTube'),
+      link(p.contact, 'Web/Contact')));
+}
+
 function renderRoster() {
-  $('#view').replaceChildren(
-    el('p', { class: 'muted' }, `名簿 ${DATA.roster.performers.length}名（実装予定）`));
+  const performers = DATA.roster.performers;
+  const bases = [...new Set(performers.map((p) => p.base).filter(Boolean))].sort();
+
+  const count = el('p', { class: 'muted' });
+  const list = el('div');
+
+  const update = () => {
+    const filtered = performers.filter((p) => {
+      if (rosterState.base && p.base !== rosterState.base) return false;
+      if (rosterState.q) {
+        const hay = `${p.name} ${p.base} ${p.skills} ${p.note}`.toLowerCase();
+        if (!hay.includes(rosterState.q.toLowerCase())) return false;
+      }
+      return true;
+    });
+    count.textContent = `${filtered.length} / ${performers.length} 名`;
+    list.replaceChildren(...filtered.map(performerCard));
+  };
+
+  const search = el('input', {
+    type: 'search', placeholder: '名前・スキル・メモで検索', value: rosterState.q });
+  search.addEventListener('input', () => { rosterState.q = search.value; update(); });
+
+  const select = el('select', {},
+    el('option', { value: '' }, '全カテゴリ'),
+    bases.map((b) => el('option', { value: b }, b)));
+  select.value = rosterState.base;
+  select.addEventListener('change', () => { rosterState.base = select.value; update(); });
+
+  $('#view').replaceChildren(el('div', { class: 'filters' }, search, select), count, list);
+  update();
 }
 function renderCandidates() {
   $('#view').replaceChildren(
