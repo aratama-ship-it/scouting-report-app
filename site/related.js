@@ -6,15 +6,7 @@ function splitSkillWords(skills) {
 }
 
 function wordsOverlap(a, b) {
-  if (a.includes(b) || b.includes(a)) return true;
-  // Fuzzy match for orthographic variations: check common substring of >= 3 chars
-  const minLen = Math.min(a.length, b.length);
-  for (let len = minLen; len >= 3; len--) {
-    for (let i = 0; i <= a.length - len; i++) {
-      if (b.includes(a.substring(i, i + len))) return true;
-    }
-  }
-  return false;
+  return a.includes(b) || b.includes(a);
 }
 
 export function findRelated(target, allPerformers, { maxResults = 6 } = {}) {

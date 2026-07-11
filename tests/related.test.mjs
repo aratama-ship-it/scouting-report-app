@@ -15,9 +15,9 @@ test('共通語が一つもなければ空配列を返す', () => {
   assert.deepEqual(result, []);
 });
 
-test('部分文字列一致で共通語を検出する（表記ゆれにも強い）', () => {
-  const target = p('A', 'Physical Circus', 'Aerial Silk');
-  const near = p('B', 'Dancer', 'Aeriel Strap');
+test('部分文字列一致で共通語を検出する（"Dance" は "Contemporary Dance" に含まれる）', () => {
+  const target = p('A', 'Dancer', 'Dance');
+  const near = p('B', 'Physical Circus', 'Contemporary Dance');
   const result = findRelated(target, [target, near]);
   assert.equal(result.length, 1);
   assert.equal(result[0].performer.name, 'B');
