@@ -1,4 +1,5 @@
 import { decryptEnvelope } from './crypto.js';
+import { findRelated } from './related.js';
 
 let DATA = null;
 let ENVELOPE = null;
@@ -26,11 +27,13 @@ export function link(url, label) {
 }
 
 // --- ビュー（Task 8〜10 で実装を差し替える） ---
-const rosterState = { q: '', base: '' };
+const rosterState = { q: '', base: '', selected: null };
 
-function performerCard(p) {
-  return el('div', { class: 'card' },
+function performerCard(p, { clickable = false, onClick, extraClass = '', favMarked = false } = {}) {
+  const classes = ['card', extraClass, clickable ? 'card-clickable' : ''].filter(Boolean).join(' ');
+  const card = el('div', { class: classes },
     el('h3', {},
+      favMarked ? el('span', { class: 'fav-mark' }, '★') : '',
       p.name, ' ',
       el('span', { class: 'tag' }, p.base || '未分類'),
       p.size && p.size !== '1' ? el('span', { class: 'tag' }, `${p.size}人`) : ''),
@@ -40,9 +43,25 @@ function performerCard(p) {
       link(p.instagram, 'Instagram'),
       link(p.youtube, 'YouTube'),
       link(p.contact, 'Web/Contact')));
+  if (clickable) {
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('a')) return; // SNSリンククリックは詳細遷移させない
+      onClick(p.name);
+    });
+  }
+  return card;
+}
+
+function openDetail(name) {
+  rosterState.selected = name;
+  renderRoster();
 }
 
 function renderRoster() {
+  if (rosterState.selected) {
+    renderDetail(rosterState.selected);
+    return;
+  }
   const performers = DATA.roster.performers;
   const bases = [...new Set(performers.map((p) => p.base).filter(Boolean))].sort();
 
@@ -59,7 +78,9 @@ function renderRoster() {
       return true;
     });
     count.textContent = `${filtered.length} / ${performers.length} 名`;
-    list.replaceChildren(...filtered.map(performerCard));
+    list.replaceChildren(...filtered.map((p) => performerCard(p, {
+      clickable: true, onClick: openDetail,
+    })));
   };
 
   const search = el('input', {
@@ -75,6 +96,36 @@ function renderRoster() {
   $('#view').replaceChildren(el('div', { class: 'filters' }, search, select), count, list);
   update();
 }
+function renderDetail(name) {
+  const target = DATA.roster.performers.find((p) => p.name === name);
+  if (!target) {
+    rosterState.selected = null;
+    renderRoster();
+    return;
+  }
+
+  const back = el('button', { type: 'button', class: 'back-btn' }, '← 一覧に戻る');
+  back.addEventListener('click', () => {
+    rosterState.selected = null;
+    renderRoster();
+  });
+
+  const related = findRelated(target, DATA.roster.performers);
+  const relatedSection = el('div', { class: 'card' },
+    el('h3', {}, '関連アーティスト'),
+    related.length === 0
+      ? el('p', { class: 'muted' }, '関連アーティストは見つかりませんでした')
+      : el('div', { class: 'related-grid' },
+          related.map(({ performer }) => performerCard(performer, {
+            clickable: true, onClick: openDetail,
+          }))));
+
+  $('#view').replaceChildren(
+    back,
+    performerCard(target, { clickable: false, extraClass: 'detail-main' }),
+    relatedSection);
+}
+
 function renderCandidates() {
   if (DATA.candidates.length === 0) {
     $('#view').replaceChildren(el('p', { class: 'muted' }, '候補データはまだありません'));
