@@ -417,8 +417,7 @@ Googleアカウントでの操作が必要（この手順はAIエージェント
 
 ## 1. スクリプトを作成する
 
-1. 対象のGoogle Sheets「Scouting report」を開く
-   https://docs.google.com/spreadsheets/d/1QVa45tnCsXPEdoiK0utIMoFTbQp42FyP08HBgaNgoxo/edit
+1. 対象のGoogle Sheets「Scouting report」を開く（普段の週次更新で使っているシート）
 2. メニュー「拡張機能」→「Apps Script」を開く（新しいタブでエディタが開く）
 3. デフォルトの `Code.gs` の中身を全部消し、このリポジトリの `gas/Code.gs` の内容を貼り付ける
 4. 上部の「保存」（フロッピーアイコン）を押す
