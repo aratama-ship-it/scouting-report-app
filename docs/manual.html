@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scouting Report 使い方マニュアル</title>
+<style>
+  :root {
+    --gold: #c9963f;
+    --dark: #16171c;
+    --panel: #1f2128;
+    --line: #d8d3c8;
+    --text: #2b2a26;
+    --muted: #6f6a5f;
+    --bg: #faf8f4;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+    line-height: 1.9; font-size: 15px;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 40px 24px 80px; }
+  header.hero {
+    background: var(--dark); color: #f0ead9; border-radius: 16px;
+    padding: 36px 32px; margin-bottom: 40px;
+  }
+  header.hero h1 { margin: 0 0 4px; font-size: 26px; color: var(--gold); letter-spacing: .02em; }
+  header.hero p { margin: 0; opacity: .85; }
+  header.hero a { color: var(--gold); word-break: break-all; }
+  h2 {
+    font-size: 20px; margin: 56px 0 16px; padding-bottom: 8px;
+    border-bottom: 3px solid var(--gold);
+  }
+  h3 { font-size: 16px; margin: 28px 0 8px; }
+  .step-num {
+    display: inline-block; background: var(--gold); color: #fff; border-radius: 50%;
+    width: 26px; height: 26px; text-align: center; line-height: 26px;
+    font-weight: 700; margin-right: 8px; font-size: 14px;
+  }
+  .card {
+    background: #fff; border: 1px solid var(--line); border-radius: 12px;
+    padding: 20px 24px; margin: 16px 0;
+  }
+  .tip {
+    background: #f4ecdb; border-left: 4px solid var(--gold); border-radius: 0 8px 8px 0;
+    padding: 12px 18px; margin: 16px 0; font-size: 14px;
+  }
+  .tip strong { color: #8a6420; }
+  figure { margin: 24px 0; text-align: center; }
+  figure svg { max-width: 100%; height: auto; }
+  figcaption { font-size: 13px; color: var(--muted); margin-top: 8px; }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 14px; }
+  th, td { border: 1px solid var(--line); padding: 10px 14px; text-align: left; vertical-align: top; }
+  th { background: #f1ede4; white-space: nowrap; }
+  code {
+    background: #eee9dd; border-radius: 4px; padding: 2px 6px;
+    font-family: Menlo, Consolas, monospace; font-size: 13px;
+  }
+  .faq dt { font-weight: 700; margin-top: 18px; }
+  .faq dt::before { content: "Q. "; color: var(--gold); font-weight: 800; }
+  .faq dd { margin: 4px 0 0; }
+  .faq dd::before { content: "A. "; color: var(--muted); font-weight: 700; }
+  .admin { border-top: 4px double var(--line); margin-top: 72px; padding-top: 8px; }
+  .admin h2 { border-bottom-color: #8b8272; }
+  @media print { header.hero { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>Scouting Report 使い方マニュアル</h1>
+  <p>チーム共有のパフォーマー名簿アプリ ─ ブラウザだけで使えます（アプリのインストール不要）</p>
+  <p style="margin-top:12px">📍 <a href="https://aratama-ship-it.github.io/scouting-report-app/">https://aratama-ship-it.github.io/scouting-report-app/</a></p>
+</header>
+
+<h2>このアプリでできること</h2>
+<div class="card">
+  <ul style="margin:0; padding-left:1.4em">
+    <li>登録済みパフォーマー（約225組）の<strong>名簿を検索・閲覧</strong></li>
+    <li>各アーティストの<strong>詳細ページ</strong>で、似たスキルを持つ<strong>関連アーティスト</strong>を発見</li>
+    <li>気になるアーティストに<strong>お気に入り ☆</strong> を付けてチームで共有</li>
+    <li>アーティストごとに<strong>コメント（メモ）</strong>を残してチームで相談</li>
+    <li>毎週自動調査される<strong>新規候補</strong>や、名簿の<strong>変更履歴・集計</strong>を確認</li>
+  </ul>
+</div>
+
+<h2>はじめかた（初回アクセス）</h2>
+
+<figure>
+<svg viewBox="0 0 700 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="初回アクセスの3ステップ">
+  <defs>
+    <marker id="arw" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#c9963f"/>
+    </marker>
+  </defs>
+  <!-- step 1 -->
+  <rect x="10" y="30" width="200" height="110" rx="12" fill="#16171c"/>
+  <text x="110" y="62" font-size="14" fill="#c9963f" text-anchor="middle" font-weight="bold">① URLを開く</text>
+  <rect x="40" y="78" width="140" height="22" rx="6" fill="#2a2c34"/>
+  <text x="110" y="94" font-size="11" fill="#9a938a" text-anchor="middle">合言葉を入力…</text>
+  <rect x="40" y="106" width="140" height="20" rx="6" fill="#c9963f"/>
+  <text x="110" y="120" font-size="11" fill="#16171c" text-anchor="middle" font-weight="bold">開く</text>
+  <!-- step 2 -->
+  <rect x="250" y="30" width="200" height="110" rx="12" fill="#16171c"/>
+  <text x="350" y="62" font-size="14" fill="#c9963f" text-anchor="middle" font-weight="bold">② 名前を入力</text>
+  <rect x="280" y="78" width="140" height="22" rx="6" fill="#2a2c34"/>
+  <text x="350" y="94" font-size="11" fill="#9a938a" text-anchor="middle">例）あらた</text>
+  <text x="350" y="126" font-size="10.5" fill="#8b857c" text-anchor="middle">☆やコメントに表示される名前</text>
+  <!-- step 3 -->
+  <rect x="490" y="30" width="200" height="110" rx="12" fill="#16171c"/>
+  <text x="590" y="62" font-size="14" fill="#c9963f" text-anchor="middle" font-weight="bold">③ 名簿が開く</text>
+  <rect x="520" y="76" width="140" height="14" rx="4" fill="#2a2c34"/>
+  <rect x="520" y="96" width="140" height="14" rx="4" fill="#2a2c34"/>
+  <rect x="520" y="116" width="140" height="14" rx="4" fill="#2a2c34"/>
+  <!-- arrows -->
+  <line x1="212" y1="85" x2="246" y2="85" stroke="#c9963f" stroke-width="2.5" marker-end="url(#arw)"/>
+  <line x1="452" y1="85" x2="486" y2="85" stroke="#c9963f" stroke-width="2.5" marker-end="url(#arw)"/>
+</svg>
+<figcaption>初回アクセスは「合言葉 → 名前 → 名簿」の3ステップ。2回目からは自動で開きます</figcaption>
+</figure>
+
+<p><span class="step-num">1</span>上のURLをスマホまたはPCのブラウザで開く</p>
+<p><span class="step-num">2</span><strong>チームの合言葉</strong>を入力して「開く」（合言葉は管理者から直接共有されます。このマニュアルには書きません）</p>
+<p><span class="step-num">3</span><strong>お名前（ニックネーム）</strong>を入力。お気に入りやコメントに表示される名前です</p>
+
+<div class="tip"><strong>💡 2回目以降:</strong> 合言葉と名前はブラウザが覚えるので、URLを開くだけですぐ名簿が表示されます。ブックマーク／ホーム画面に追加しておくと便利です。</div>
+
+<h2>画面の見かた ─ 4つのタブ</h2>
+
+<figure>
+<svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="画面構成">
+  <rect x="60" y="10" width="580" height="220" rx="14" fill="#16171c"/>
+  <!-- header -->
+  <text x="90" y="45" font-size="15" fill="#c9963f" font-weight="bold">Scouting Report</text>
+  <rect x="440" y="28" width="90" height="24" rx="6" fill="none" stroke="#3a3d47"/>
+  <text x="485" y="45" font-size="11" fill="#b6b0a6" text-anchor="middle">👤 あなたの名前</text>
+  <rect x="540" y="28" width="70" height="24" rx="6" fill="none" stroke="#3a3d47"/>
+  <text x="575" y="45" font-size="11" fill="#b6b0a6" text-anchor="middle">ロック</text>
+  <!-- tabs -->
+  <rect x="88" y="66" width="60" height="26" rx="7" fill="#2e313b"/>
+  <text x="118" y="84" font-size="12" fill="#fff" text-anchor="middle" font-weight="bold">名簿</text>
+  <text x="188" y="84" font-size="12" fill="#8f897f" text-anchor="middle">候補</text>
+  <text x="258" y="84" font-size="12" fill="#8f897f" text-anchor="middle">履歴</text>
+  <text x="328" y="84" font-size="12" fill="#8f897f" text-anchor="middle">集計</text>
+  <!-- annotation lines -->
+  <line x1="118" y1="96" x2="118" y2="120" stroke="#c9963f" stroke-width="1.5"/>
+  <rect x="88" y="120" width="524" height="94" rx="9" fill="#22242c"/>
+  <text x="106" y="146" font-size="12.5" fill="#e8e2d4" font-weight="bold">★ アーティスト名 <tspan fill="#8f897f" font-weight="normal">カテゴリ</tspan></text>
+  <text x="106" y="168" font-size="11.5" fill="#8f897f">スキル / スキル / スキル</text>
+  <text x="106" y="190" font-size="11.5" fill="#c9963f">Instagram　YouTube</text>
+  <text x="470" y="176" font-size="11" fill="#c9963f" font-weight="bold">← カードをタップで詳細へ</text>
+</svg>
+<figcaption>上部のタブで画面を切り替え。★印はチームの誰かがお気に入り登録したアーティスト</figcaption>
+</figure>
+
+<table>
+  <tr><th>名簿</th><td>登録アーティストの一覧。<strong>検索ボックス</strong>（名前・スキル・メモ）と<strong>カテゴリ絞り込み</strong>が使えます。カードをタップすると詳細ページへ。</td></tr>
+  <tr><th>候補</th><td>毎週の自動調査で見つかった<strong>新規スカウト候補</strong>。「シート追記済み / 未追記」のタグで名簿への反映状況がわかります。</td></tr>
+  <tr><th>履歴</th><td>名簿の<strong>週ごとの変化</strong>（追加・削除・変更）の記録。</td></tr>
+  <tr><th>集計</th><td>登録数とカテゴリ別の内訳グラフ、スカウトが手薄なジャンルのメモ。</td></tr>
+</table>
+
+<h2>詳細ページでできること</h2>
+
+<figure>
+<svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="詳細ページの構成">
+  <rect x="60" y="10" width="400" height="280" rx="14" fill="#16171c"/>
+  <rect x="84" y="28" width="110" height="24" rx="7" fill="none" stroke="#3a3d47"/>
+  <text x="139" y="45" font-size="11" fill="#b6b0a6" text-anchor="middle">← 一覧に戻る</text>
+  <!-- main card -->
+  <rect x="84" y="64" width="352" height="56" rx="9" fill="#22242c"/>
+  <text x="100" y="88" font-size="14" fill="#e8e2d4" font-weight="bold">アーティスト名 <tspan fill="#8f897f" font-size="11" font-weight="normal">カテゴリ</tspan></text>
+  <text x="100" y="108" font-size="11" fill="#c9963f">Instagram　YouTube</text>
+  <!-- fav/comment card -->
+  <rect x="84" y="130" width="352" height="100" rx="9" fill="#22242c"/>
+  <text x="100" y="152" font-size="12" fill="#e8e2d4" font-weight="bold">お気に入り・コメント</text>
+  <rect x="100" y="162" width="64" height="24" rx="7" fill="none" stroke="#c9963f"/>
+  <text x="132" y="179" font-size="12" fill="#c9963f" text-anchor="middle">★ 3人</text>
+  <rect x="172" y="162" width="46" height="24" rx="7" fill="#e8e2d4"/>
+  <text x="195" y="179" font-size="11" fill="#16171c" text-anchor="middle">更新</text>
+  <rect x="100" y="196" width="260" height="24" rx="7" fill="#2a2c34"/>
+  <text x="112" y="213" font-size="10.5" fill="#8f897f">コメントを入力</text>
+  <rect x="368" y="196" width="48" height="24" rx="7" fill="#c9963f"/>
+  <text x="392" y="213" font-size="11" fill="#16171c" text-anchor="middle" font-weight="bold">投稿</text>
+  <!-- related -->
+  <rect x="84" y="240" width="352" height="38" rx="9" fill="#22242c"/>
+  <text x="100" y="264" font-size="12" fill="#e8e2d4" font-weight="bold">関連アーティスト <tspan fill="#8f897f" font-size="10.5" font-weight="normal">─ 似たスキルの人が並ぶ</tspan></text>
+  <!-- annotations -->
+  <line x1="466" y1="174" x2="500" y2="174" stroke="#c9963f" stroke-width="1.5"/>
+  <text x="508" y="168" font-size="12" fill="#2b2a26" font-weight="bold">☆を押すと★に。</text>
+  <text x="508" y="186" font-size="11.5" fill="#6f6a5f">人数はチーム全員の合計</text>
+  <line x1="466" y1="208" x2="500" y2="208" stroke="#c9963f" stroke-width="1.5"/>
+  <text x="508" y="203" font-size="12" fill="#2b2a26" font-weight="bold">コメントは名前・日時</text>
+  <text x="508" y="221" font-size="11.5" fill="#6f6a5f">つきでチームに共有</text>
+  <line x1="466" y1="259" x2="500" y2="259" stroke="#c9963f" stroke-width="1.5"/>
+  <text x="508" y="254" font-size="12" fill="#2b2a26" font-weight="bold">タップでその人の</text>
+  <text x="508" y="272" font-size="11.5" fill="#6f6a5f">詳細ページへ移動</text>
+</svg>
+<figcaption>名簿のカードをタップすると開く詳細ページ</figcaption>
+</figure>
+
+<h3>お気に入り ☆</h3>
+<p>「☆ 0人」ボタンを押すと自分のお気に入りとして登録され、<strong>★</strong>に変わります。数字は<strong>チーム全体で何人が☆したか</strong>。もう一度押すと取り消せます。☆が付いたアーティストは名簿一覧でも★マークが表示されるので、チームの注目株がひと目でわかります。</p>
+
+<h3>コメント</h3>
+<p>「コメントを入力」欄に書いて「投稿」を押すだけ。<strong>あなたの名前と日時つき</strong>でチーム全員に表示されます。「この人、来年の公演に合いそう」「連絡済み・返信待ち」などの共有メモにどうぞ。他の人の書き込みを見るときは「更新」ボタンで最新に。</p>
+
+<div class="tip"><strong>⚠️ 注意:</strong> コメントは今のところ<strong>削除ボタンがありません</strong>（管理者がスプレッドシート側で削除できます）。誤字は気にせず、書き直しでOKです。</div>
+
+<h3>名前（ニックネーム）の変更</h3>
+<p>画面右上の「👤 名前」ボタンを押すといつでも変更できます。</p>
+
+<h2>よくある質問</h2>
+<dl class="faq">
+  <dt>スマホでも使えますか？</dt>
+  <dd>使えます。スマホ・タブレット・PCどれでもOK。画面は自動で最適化されます。</dd>
+  <dt>合言葉を忘れました</dt>
+  <dd>管理者（Arata）に直接聞いてください。メールやSNSに書き残さないようお願いします。</dd>
+  <dt>「ロック」ボタンは何ですか？</dt>
+  <dd>ログアウトのようなものです。共用PCで見たあとなど、他人に見られたくないときに押してください。次回また合言葉が必要になります。</dd>
+  <dt>InstagramやYouTubeのリンクを押すとどうなりますか？</dt>
+  <dd>新しいタブでそのアーティストのページが開きます。アプリの画面はそのまま残ります。</dd>
+  <dt>名簿のデータはいつ更新されますか？</dt>
+  <dd>週1回（月曜朝）の自動更新です。画面上部に「◯◯◯◯-◯◯-◯◯時点」とデータの基準日が表示されています。</dd>
+  <dt>お気に入りやコメントが表示されません</dt>
+  <dd>通信の一時的な問題の可能性があります。「更新」ボタンか、ページの再読み込みを試してください。名簿の閲覧自体はそのまま使えます。</dd>
+</dl>
+
+<div class="admin">
+<h2>管理者向けメモ（Arata用）</h2>
+
+<figure>
+<svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="データの流れ">
+  <defs>
+    <marker id="arw2" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#8b8272"/>
+    </marker>
+  </defs>
+  <!-- Google Sheet -->
+  <rect x="20" y="80" width="150" height="70" rx="10" fill="#1e6b40"/>
+  <text x="95" y="110" font-size="13" fill="#fff" text-anchor="middle" font-weight="bold">Googleシート</text>
+  <text x="95" y="130" font-size="10.5" fill="#c8e6d4" text-anchor="middle">名簿の大元（マスター）</text>
+  <!-- weekly build -->
+  <rect x="240" y="20" width="200" height="64" rx="10" fill="#3d4d6b"/>
+  <text x="340" y="45" font-size="12.5" fill="#fff" text-anchor="middle" font-weight="bold">週次タスク（月曜9時）</text>
+  <text x="340" y="66" font-size="10" fill="#c5cede" text-anchor="middle">スナップショット → build → push</text>
+  <!-- pages -->
+  <rect x="510" y="80" width="170" height="70" rx="10" fill="#16171c"/>
+  <text x="595" y="108" font-size="13" fill="#c9963f" text-anchor="middle" font-weight="bold">Webアプリ</text>
+  <text x="595" y="130" font-size="10.5" fill="#9a938a" text-anchor="middle">GitHub Pages（暗号化配信）</text>
+  <!-- GAS -->
+  <rect x="240" y="170" width="200" height="64" rx="10" fill="#7a4a1e"/>
+  <text x="340" y="196" font-size="13" fill="#fff" text-anchor="middle" font-weight="bold">GAS Webアプリ</text>
+  <text x="340" y="216" font-size="10" fill="#e6d2ba" text-anchor="middle">合言葉検証つきAPI（読み書き）</text>
+  <!-- arrows -->
+  <line x1="140" y1="76" x2="236" y2="52" stroke="#8b8272" stroke-width="2" marker-end="url(#arw2)"/>
+  <text x="160" y="46" font-size="10.5" fill="#6f6a5f">読み取り</text>
+  <line x1="444" y1="52" x2="545" y2="76" stroke="#8b8272" stroke-width="2" marker-end="url(#arw2)"/>
+  <text x="465" y="46" font-size="10.5" fill="#6f6a5f">data.enc 更新</text>
+  <line x1="510" y1="150" x2="444" y2="185" stroke="#8b8272" stroke-width="2" marker-end="url(#arw2)"/>
+  <text x="478" y="180" font-size="10.5" fill="#6f6a5f">☆・コメント</text>
+  <line x1="236" y1="202" x2="120" y2="156" stroke="#8b8272" stroke-width="2" marker-end="url(#arw2)"/>
+  <text x="128" y="190" font-size="10.5" fill="#6f6a5f">Favorites / Candidates</text>
+  <text x="128" y="204" font-size="10.5" fill="#6f6a5f">タブに書き込み</text>
+</svg>
+<figcaption>名簿はシート→暗号化ファイルの一方向、☆・コメント・候補はGAS経由でシートへ書き戻し</figcaption>
+</figure>
+
+<table>
+  <tr><th>名簿データ更新</th><td>週次定期タスクが自動実行（スナップショット保存 → <code>npm run build</code> → push → Pages反映）。手動更新も同じ手順。</td></tr>
+  <tr><th>☆・コメントの実体</th><td>スプレッドシートの <code>Favorites</code> タブ。不適切な行は直接削除してOK（即反映）。</td></tr>
+  <tr><th>候補の自動追記</th><td><code>node tools/push-candidates.mjs &lt;候補md&gt;</code> → シートの <code>Candidates</code> タブへ。同名は自動スキップ。採用する候補は本名簿の行へ手で移す。</td></tr>
+  <tr><th>合言葉の変更</th><td>① <code>.secret</code> を書き換え → <code>npm run build</code> → push　② GASのスクリプトプロパティ <code>PASSPHRASE</code> も同じ値に変更　③ チームに新しい合言葉を連絡。</td></tr>
+  <tr><th>GASコードの更新</th><td><code>gas/DEPLOY.md</code> の手順6（エディタに貼り直し → デプロイを管理 → 新バージョン。URLは変わらない）。</td></tr>
+  <tr><th>コミット禁止物</th><td>生の名簿md・シートID・合言葉（<code>.secret</code>）は公開リポジトリに入れない。</td></tr>
+</table>
+</div>
+
+<p style="margin-top:48px; color:var(--muted); font-size:12.5px; text-align:center">Scouting Report マニュアル v1.0（2026-07-13）</p>
+
+</div>
+</body>
+</html>
