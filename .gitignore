@@ -3,3 +3,6 @@ node_modules/
 .DS_Store
 .superpowers/
 *.diff
+# 実在の演者名・SNS等の生データを含むため、docs/配下に生成されても絶対にコミットしない
+docs/roster-intros.html
+docs/roster-research.json
