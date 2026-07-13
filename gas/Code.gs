@@ -1,4 +1,5 @@
 const SHEET_NAME = 'Favorites';
+const CANDIDATES_SHEET = 'Candidates';
 
 function getPassphrase_() {
   return PropertiesService.getScriptProperties().getProperty('PASSPHRASE');
@@ -54,4 +55,56 @@ function doGet(e) {
   const comments = rows.filter((r) => r[3] === 'comment')
     .map((r) => ({ timestamp: r[0], name: r[1], artist: r[2], text: r[4] }));
   return jsonOutput_({ favorites, comments });
+}
+
+// 週次スカウティング候補の自動追記。本名簿には触れず「Candidates」タブに積む。
+// 承認した候補をユーザーが手で本名簿へ移す運用。
+function getCandidatesSheet_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(CANDIDATES_SHEET);
+  if (!sheet) {
+    sheet = ss.insertSheet(CANDIDATES_SHEET);
+    sheet.appendRow(['added_date', 'name', 'category', 'size', 'skills', 'url', 'reason', 'status']);
+  }
+  return sheet;
+}
+
+function doPost(e) {
+  let body;
+  try {
+    body = JSON.parse(e.postData.contents);
+  } catch (err) {
+    return jsonOutput_({ error: 'invalid JSON body' });
+  }
+  const expected = getPassphrase_();
+  if (!expected || body.passphrase !== expected) {
+    return jsonOutput_({ error: 'invalid passphrase' });
+  }
+
+  if (body.action === 'addCandidates') {
+    if (!Array.isArray(body.candidates) || body.candidates.length === 0) {
+      return jsonOutput_({ error: 'candidates array is required' });
+    }
+    const sheet = getCandidatesSheet_();
+    const existing = new Set(
+      sheet.getDataRange().getValues().slice(1).map((r) => String(r[1]).trim()));
+    const date = body.date || new Date().toISOString().slice(0, 10);
+    let added = 0;
+    const skipped = [];
+    for (const c of body.candidates) {
+      const name = String(c.name || '').trim();
+      if (!name) continue;
+      if (existing.has(name)) {
+        skipped.push(name);
+        continue;
+      }
+      sheet.appendRow([date, name, c.category || '', c.size || '',
+        c.skills || '', c.url || '', c.reason || '', c.status || '']);
+      existing.add(name);
+      added++;
+    }
+    return jsonOutput_({ ok: true, added, skipped });
+  }
+
+  return jsonOutput_({ error: 'unknown action' });
 }
