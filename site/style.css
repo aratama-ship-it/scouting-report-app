@@ -58,3 +58,17 @@ main { padding: 16px; max-width: 1100px; margin: 0 auto; }
 .detail-main h3 { font-size: 20px; }
 .related-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
 .fav-mark { color: var(--accent); margin-right: 4px; }
+.fav-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.fav-btn { background: none; border: 1px solid var(--line); color: var(--text);
+  border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 14px; }
+.fav-btn.fav-active { border-color: var(--accent); color: var(--accent); }
+.fav-btn:disabled, #nickname-btn:disabled { opacity: .5; cursor: default; }
+#nickname-btn { background: none; border: 1px solid var(--line); color: var(--muted);
+  border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 12px; }
+.comment-form { display: flex; gap: 8px; margin-bottom: 12px; }
+.comment-form textarea { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--bg); color: var(--text); font-family: inherit; font-size: 14px; resize: vertical; }
+.comment-form button { border: none; border-radius: 8px; background: var(--accent);
+  color: #14151a; font-weight: 700; padding: 0 16px; cursor: pointer; }
+.comment { border-top: 1px solid var(--line); padding: 8px 0; font-size: 14px; }
+header { flex-wrap: wrap; row-gap: 6px; }

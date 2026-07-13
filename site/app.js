@@ -1,8 +1,13 @@
 import { decryptEnvelope } from './crypto.js';
 import { findRelated } from './related.js';
+import { fetchFavorites, toggleFavorite, addComment, getNickname, setNickname } from './favorites.js';
+import { GAS_URL } from './favorites-config.js';
 
 let DATA = null;
 let ENVELOPE = null;
+let PASSPHRASE = null;
+let FAVORITES = { favorites: [], comments: [] };
+let favError = null;
 const $ = (sel) => document.querySelector(sel);
 const PASS_KEY = 'scout_pass';
 
@@ -52,6 +57,33 @@ function performerCard(p, { clickable = false, onClick, extraClass = '', favMark
   return card;
 }
 
+function ensureNickname() {
+  let name = getNickname();
+  if (!name) {
+    name = (prompt('お名前を入力してください（チーム内に表示されます）') || '').trim();
+    if (name) setNickname(name);
+  }
+  return name;
+}
+
+function updateNicknameDisplay() {
+  const name = getNickname();
+  $('#nickname-btn').textContent = name ? `👤 ${name}` : '👤 名前未設定';
+}
+
+async function loadFavorites() {
+  try {
+    FAVORITES = await fetchFavorites(GAS_URL, PASSPHRASE);
+    favError = null;
+  } catch {
+    favError = 'お気に入り・コメントを読み込めませんでした';
+  }
+}
+
+function formatTimestamp(ts) {
+  return ts ? new Date(ts).toLocaleString('ja-JP') : '';
+}
+
 function openDetail(name) {
   rosterState.selected = name;
   renderRoster();
@@ -78,8 +110,9 @@ function renderRoster() {
       return true;
     });
     count.textContent = `${filtered.length} / ${performers.length} 名`;
+    const favoritedNames = new Set(FAVORITES.favorites.map((f) => f.artist));
     list.replaceChildren(...filtered.map((p) => performerCard(p, {
-      clickable: true, onClick: openDetail,
+      clickable: true, onClick: openDetail, favMarked: favoritedNames.has(p.name),
     })));
   };
 
@@ -96,7 +129,7 @@ function renderRoster() {
   $('#view').replaceChildren(el('div', { class: 'filters' }, search, select), count, list);
   update();
 }
-function renderDetail(name) {
+async function renderDetail(name) {
   const target = DATA.roster.performers.find((p) => p.name === name);
   if (!target) {
     rosterState.selected = null;
@@ -104,11 +137,69 @@ function renderDetail(name) {
     return;
   }
 
+  $('#view').replaceChildren(el('p', { class: 'muted' }, '読み込み中…'));
+  await loadFavorites();
+  if (rosterState.selected !== name) return; // その間に別のカードが選ばれていたら描画しない
+
   const back = el('button', { type: 'button', class: 'back-btn' }, '← 一覧に戻る');
   back.addEventListener('click', () => {
     rosterState.selected = null;
     renderRoster();
   });
+
+  const myName = getNickname();
+  const favCount = FAVORITES.favorites.filter((f) => f.artist === target.name).length;
+  const iAmFavorited = FAVORITES.favorites.some(
+    (f) => f.artist === target.name && f.name === myName);
+
+  const favBtn = el('button', {
+    type: 'button', class: 'fav-btn' + (iAmFavorited ? ' fav-active' : ''),
+  }, `${iAmFavorited ? '★' : '☆'} ${favCount}人`);
+  favBtn.addEventListener('click', async () => {
+    favBtn.disabled = true;
+    try {
+      await toggleFavorite(GAS_URL, PASSPHRASE, ensureNickname(), target.name);
+      renderDetail(target.name);
+    } catch {
+      favBtn.disabled = false;
+    }
+  });
+
+  const refreshBtn = el('button', { type: 'button' }, '更新');
+  refreshBtn.addEventListener('click', () => renderDetail(target.name));
+
+  const commentsForTarget = FAVORITES.comments.filter((c) => c.artist === target.name);
+  const commentForm = el('form', { class: 'comment-form' },
+    el('textarea', { placeholder: 'コメントを入力', rows: '2' }),
+    el('button', { type: 'submit' }, '投稿'));
+  commentForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const textarea = commentForm.querySelector('textarea');
+    const text = textarea.value.trim();
+    if (!text) return;
+    const submitBtn = commentForm.querySelector('button');
+    submitBtn.disabled = true;
+    try {
+      await addComment(GAS_URL, PASSPHRASE, ensureNickname(), target.name, text);
+      renderDetail(target.name);
+    } catch {
+      submitBtn.disabled = false;
+    }
+  });
+
+  const commentList = el('div', {},
+    commentsForTarget.length === 0
+      ? el('p', { class: 'muted' }, 'コメントはまだありません')
+      : commentsForTarget.map((c) => el('div', { class: 'comment' },
+          el('div', { class: 'muted' }, `${c.name} ・ ${formatTimestamp(c.timestamp)}`),
+          el('div', {}, c.text))));
+
+  const favCommentCard = el('div', { class: 'card' },
+    el('h3', {}, 'お気に入り・コメント'),
+    favError ? el('p', { class: 'error' }, favError) : '',
+    el('div', { class: 'fav-row' }, favBtn, refreshBtn),
+    commentForm,
+    commentList);
 
   const related = findRelated(target, DATA.roster.performers);
   const relatedSection = el('div', { class: 'card' },
@@ -123,6 +214,7 @@ function renderDetail(name) {
   $('#view').replaceChildren(
     back,
     performerCard(target, { clickable: false, extraClass: 'detail-main' }),
+    favCommentCard,
     relatedSection);
 }
 
@@ -200,12 +292,18 @@ function showView(name) {
 
 async function unlock(pass) {
   DATA = await decryptEnvelope(pass, ENVELOPE); // 失敗時は例外
+  PASSPHRASE = pass;
   localStorage.setItem(PASS_KEY, pass);
   $('#lock').hidden = true;
   $('#app').hidden = false;
   $('#meta').textContent =
     `${DATA.roster.date} 時点 / ${DATA.roster.performers.length}名`;
+  ensureNickname();
+  updateNicknameDisplay();
   showView('roster');
+  loadFavorites().then(() => {
+    if (!rosterState.selected) renderRoster();
+  });
 }
 
 async function init() {
@@ -237,6 +335,15 @@ async function init() {
   $('#lock-btn').addEventListener('click', () => {
     localStorage.removeItem(PASS_KEY);
     location.reload();
+  });
+
+  $('#nickname-btn').addEventListener('click', () => {
+    const current = getNickname();
+    const name = (prompt('お名前を入力してください', current) || '').trim();
+    if (name) {
+      setNickname(name);
+      updateNicknameDisplay();
+    }
   });
 
   try {
