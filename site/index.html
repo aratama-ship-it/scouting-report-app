@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,14 +11,14 @@
 <div id="lock" class="lock">
   <form id="lock-form" class="lock-card">
     <h1>Scouting Report</h1>
-    <p>チームの合言葉を入力してください</p>
+    <p>Enter your team passphrase</p>
     <div class="pass-row">
       <input id="pass" type="password" autocomplete="current-password" autofocus>
-      <button id="pass-toggle" type="button" aria-label="合言葉を表示">👁</button>
+      <button id="pass-toggle" type="button" aria-label="Show passphrase">👁</button>
     </div>
-    <button type="submit">開く</button>
-    <p id="lock-error" class="error" hidden>合言葉が違います</p>
-    <p id="lock-loading" hidden>復号中…</p>
+    <button type="submit">Unlock</button>
+    <p id="lock-error" class="error" hidden>Incorrect passphrase</p>
+    <p id="lock-loading" hidden>Decrypting…</p>
   </form>
 </div>
 <div id="app" hidden>
@@ -26,13 +26,13 @@
     <h1>Scouting Report</h1>
     <span id="meta"></span>
     <button id="nickname-btn" type="button"></button>
-    <button id="lock-btn" type="button">ロック</button>
+    <button id="lock-btn" type="button">Lock</button>
   </header>
   <nav id="tabs">
-    <button data-view="roster" class="active">名簿</button>
-    <button data-view="candidates">候補</button>
-    <button data-view="history">履歴</button>
-    <button data-view="dashboard">集計</button>
+    <button data-view="roster" class="active">Roster</button>
+    <button data-view="candidates">Candidates</button>
+    <button data-view="history">History</button>
+    <button data-view="dashboard">Dashboard</button>
   </nav>
   <main id="view"></main>
 </div>

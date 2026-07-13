@@ -40,8 +40,8 @@ function performerCard(p, { clickable = false, onClick, extraClass = '', favMark
     el('h3', {},
       favMarked ? el('span', { class: 'fav-mark' }, '★') : '',
       p.name, ' ',
-      el('span', { class: 'tag' }, p.base || '未分類'),
-      p.size && p.size !== '1' ? el('span', { class: 'tag' }, `${p.size}人`) : ''),
+      el('span', { class: 'tag' }, p.base || 'Uncategorized'),
+      p.size && p.size !== '1' ? el('span', { class: 'tag' }, `${p.size} members`) : ''),
     el('div', { class: 'muted' }, p.skills),
     p.note ? el('div', { class: 'muted' }, `📝 ${p.note}`) : '',
     el('div', { class: 'links' },
@@ -60,7 +60,7 @@ function performerCard(p, { clickable = false, onClick, extraClass = '', favMark
 function ensureNickname() {
   let name = getNickname();
   if (!name) {
-    name = (prompt('お名前を入力してください（チーム内に表示されます）') || '').trim();
+    name = (prompt('Enter your name (shown to the team)') || '').trim();
     if (name) setNickname(name);
   }
   return name;
@@ -68,7 +68,7 @@ function ensureNickname() {
 
 function updateNicknameDisplay() {
   const name = getNickname();
-  $('#nickname-btn').textContent = name ? `👤 ${name}` : '👤 名前未設定';
+  $('#nickname-btn').textContent = name ? `👤 ${name}` : '👤 No name set';
 }
 
 async function loadFavorites() {
@@ -76,12 +76,12 @@ async function loadFavorites() {
     FAVORITES = await fetchFavorites(GAS_URL, PASSPHRASE);
     favError = null;
   } catch {
-    favError = 'お気に入り・コメントを読み込めませんでした';
+    favError = "Couldn't load favorites/comments";
   }
 }
 
 function formatTimestamp(ts) {
-  return ts ? new Date(ts).toLocaleString('ja-JP') : '';
+  return ts ? new Date(ts).toLocaleString('en-US') : '';
 }
 
 function openDetail(name) {
@@ -109,7 +109,7 @@ function renderRoster() {
       }
       return true;
     });
-    count.textContent = `${filtered.length} / ${performers.length} 名`;
+    count.textContent = `${filtered.length} / ${performers.length} artists`;
     const favoritedNames = new Set(FAVORITES.favorites.map((f) => f.artist));
     list.replaceChildren(...filtered.map((p) => performerCard(p, {
       clickable: true, onClick: openDetail, favMarked: favoritedNames.has(p.name),
@@ -117,11 +117,11 @@ function renderRoster() {
   };
 
   const search = el('input', {
-    type: 'search', placeholder: '名前・スキル・メモで検索', value: rosterState.q });
+    type: 'search', placeholder: 'Search by name, skill, or note', value: rosterState.q });
   search.addEventListener('input', () => { rosterState.q = search.value; update(); });
 
   const select = el('select', {},
-    el('option', { value: '' }, '全カテゴリ'),
+    el('option', { value: '' }, 'All categories'),
     bases.map((b) => el('option', { value: b }, b)));
   select.value = rosterState.base;
   select.addEventListener('change', () => { rosterState.base = select.value; update(); });
@@ -137,11 +137,11 @@ async function renderDetail(name) {
     return;
   }
 
-  $('#view').replaceChildren(el('p', { class: 'muted' }, '読み込み中…'));
+  $('#view').replaceChildren(el('p', { class: 'muted' }, 'Loading…'));
   await loadFavorites();
-  if (rosterState.selected !== name) return; // その間に別のカードが選ばれていたら描画しない
+  if (rosterState.selected !== name) return; // don't render if another card was selected meanwhile
 
-  const back = el('button', { type: 'button', class: 'back-btn' }, '← 一覧に戻る');
+  const back = el('button', { type: 'button', class: 'back-btn' }, '← Back to roster');
   back.addEventListener('click', () => {
     rosterState.selected = null;
     renderRoster();
@@ -154,7 +154,7 @@ async function renderDetail(name) {
 
   const favBtn = el('button', {
     type: 'button', class: 'fav-btn' + (iAmFavorited ? ' fav-active' : ''),
-  }, `${iAmFavorited ? '★' : '☆'} ${favCount}人`);
+  }, `${iAmFavorited ? '★' : '☆'} ${favCount}`);
   favBtn.addEventListener('click', async () => {
     favBtn.disabled = true;
     try {
@@ -165,13 +165,13 @@ async function renderDetail(name) {
     }
   });
 
-  const refreshBtn = el('button', { type: 'button' }, '更新');
+  const refreshBtn = el('button', { type: 'button' }, 'Refresh');
   refreshBtn.addEventListener('click', () => renderDetail(target.name));
 
   const commentsForTarget = FAVORITES.comments.filter((c) => c.artist === target.name);
   const commentForm = el('form', { class: 'comment-form' },
-    el('textarea', { placeholder: 'コメントを入力', rows: '2' }),
-    el('button', { type: 'submit' }, '投稿'));
+    el('textarea', { placeholder: 'Write a comment…', rows: '2' }),
+    el('button', { type: 'submit' }, 'Post'));
   commentForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const textarea = commentForm.querySelector('textarea');
@@ -189,13 +189,13 @@ async function renderDetail(name) {
 
   const commentList = el('div', {},
     commentsForTarget.length === 0
-      ? el('p', { class: 'muted' }, 'コメントはまだありません')
+      ? el('p', { class: 'muted' }, 'No comments yet')
       : commentsForTarget.map((c) => el('div', { class: 'comment' },
-          el('div', { class: 'muted' }, `${c.name} ・ ${formatTimestamp(c.timestamp)}`),
+          el('div', { class: 'muted' }, `${c.name} · ${formatTimestamp(c.timestamp)}`),
           el('div', {}, c.text))));
 
   const favCommentCard = el('div', { class: 'card' },
-    el('h3', {}, 'お気に入り・コメント'),
+    el('h3', {}, 'Favorites & Comments'),
     favError ? el('p', { class: 'error' }, favError) : '',
     el('div', { class: 'fav-row' }, favBtn, refreshBtn),
     commentForm,
@@ -203,9 +203,9 @@ async function renderDetail(name) {
 
   const related = findRelated(target, DATA.roster.performers);
   const relatedSection = el('div', { class: 'card' },
-    el('h3', {}, '関連アーティスト'),
+    el('h3', {}, 'Related Artists'),
     related.length === 0
-      ? el('p', { class: 'muted' }, '関連アーティストは見つかりませんでした')
+      ? el('p', { class: 'muted' }, 'No related artists found')
       : el('div', { class: 'related-grid' },
           related.map(({ performer }) => performerCard(performer, {
             clickable: true, onClick: openDetail,
@@ -220,66 +220,66 @@ async function renderDetail(name) {
 
 function renderCandidates() {
   if (DATA.candidates.length === 0) {
-    $('#view').replaceChildren(el('p', { class: 'muted' }, '候補データはまだありません'));
+    $('#view').replaceChildren(el('p', { class: 'muted' }, 'No candidate data yet'));
     return;
   }
   const rosterNames = new Set(DATA.roster.performers.map((p) => p.name));
   $('#view').replaceChildren(...DATA.candidates.flatMap((week) => [
-    el('h2', { class: 'muted' }, `${week.date} の新規候補（${week.items.length}件）`),
+    el('h2', { class: 'muted' }, `New candidates as of ${week.date} (${week.items.length})`),
     ...week.items.map((c) => el('div', { class: 'card' },
       el('h3', {},
         c.name, ' ',
         el('span', { class: 'tag' }, c.category),
         rosterNames.has(c.name)
-          ? el('span', { class: 'tag diff-added' }, 'シート追記済み')
-          : el('span', { class: 'tag' }, '未追記')),
-      el('div', { class: 'muted' }, c.skills + (c.size ? ` ／ 人数: ${c.size}` : '')),
+          ? el('span', { class: 'tag diff-added' }, 'Added to sheet')
+          : el('span', { class: 'tag' }, 'Not yet added')),
+      el('div', { class: 'muted' }, c.skills + (c.size ? ` / Size: ${c.size}` : '')),
       c.reason ? el('div', { class: 'muted' }, `💡 ${c.reason}`) : '',
       c.status ? el('div', { class: 'muted' }, `✔️ ${c.status}`) : '',
-      el('div', { class: 'links' }, link(c.url, '公式サイト')))),
+      el('div', { class: 'links' }, link(c.url, 'Official site')))),
   ]));
 }
 function renderHistory() {
   if (DATA.history.length === 0) {
     $('#view').replaceChildren(el('p', { class: 'muted' },
-      '履歴はまだありません（スナップショットが2週分たまると表示されます）'));
+      'No history yet (this appears once two weekly snapshots have been recorded)'));
     return;
   }
   $('#view').replaceChildren(...DATA.history.map((w) => el('div', { class: 'card' },
     el('h3', {}, `${w.prevDate} → ${w.date}`),
     w.added.length ? el('div', { class: 'diff-added' },
-      `＋ 追加 (${w.added.length}): ${w.added.map((p) => p.name).join('、')}`) : '',
+      `+ Added (${w.added.length}): ${w.added.map((p) => p.name).join(', ')}`) : '',
     w.removed.length ? el('div', { class: 'diff-removed' },
-      `− 削除 (${w.removed.length}): ${w.removed.map((p) => p.name).join('、')}`) : '',
+      `− Removed (${w.removed.length}): ${w.removed.map((p) => p.name).join(', ')}`) : '',
     w.changed.length ? [
-      el('div', { class: 'muted' }, `✎ 変更 (${w.changed.length}):`),
+      el('div', { class: 'muted' }, `✎ Changed (${w.changed.length}):`),
       w.changed.map((c) => el('div', { class: 'muted' },
-        `・${c.name}: ` + c.fields.map((f) =>
-          `${f.field}「${f.from}」→「${f.to}」`).join(' / '))),
+        `· ${c.name}: ` + c.fields.map((f) =>
+          `${f.field} "${f.from}" → "${f.to}"`).join(' / '))),
     ] : '',
     !w.added.length && !w.removed.length && !w.changed.length
-      ? el('div', { class: 'muted' }, '変更なし') : '')));
+      ? el('div', { class: 'muted' }, 'No changes') : '')));
 }
 function renderDashboard() {
   const entries = Object.entries(DATA.stats.byBase);
   const max = Math.max(...entries.map(([, n]) => n), 1);
   $('#view').replaceChildren(
     el('div', { class: 'card' },
-      el('h3', {}, '登録数'),
+      el('h3', {}, 'Total Registered'),
       el('p', { class: 'big-number' },
         String(DATA.stats.total),
-        el('span', { class: 'muted' }, ` 組（${DATA.roster.date} 時点）`))),
+        el('span', { class: 'muted' }, ` artists (as of ${DATA.roster.date})`))),
     el('div', { class: 'card' },
-      el('h3', {}, 'カテゴリ別'),
+      el('h3', {}, 'By Category'),
       entries.map(([base, n]) => el('div', { class: 'bar-row' },
         el('span', {}, base),
         el('div', {},
           el('div', { class: 'bar', style: `width:${Math.round((n / max) * 100)}%` })),
         el('span', { class: 'muted' }, String(n))))),
     el('div', { class: 'card' },
-      el('h3', {}, '手薄ジャンル（要スカウト）'),
+      el('h3', {}, 'Underrepresented Genres (Scouting Needed)'),
       el('p', { class: 'muted' },
-        'マジック／ファイアー／台系アクロバット／バブル／スティルト／腹話術／MC・ホスト など。最新の候補は「候補」タブへ。')));
+        'Magic, fire performance, banquine/pole acrobatics, bubble shows, stilts, ventriloquism, MC/hosting, and more. See the "Candidates" tab for the latest picks.')));
 }
 const VIEWS = { roster: renderRoster, candidates: renderCandidates,
   history: renderHistory, dashboard: renderDashboard };
@@ -297,7 +297,7 @@ async function unlock(pass) {
   $('#lock').hidden = true;
   $('#app').hidden = false;
   $('#meta').textContent =
-    `${DATA.roster.date} 時点 / ${DATA.roster.performers.length}名`;
+    `As of ${DATA.roster.date} / ${DATA.roster.performers.length} artists`;
   ensureNickname();
   updateNicknameDisplay();
   showView('roster');
@@ -325,7 +325,7 @@ async function init() {
     const showing = pass.type === 'text';
     pass.type = showing ? 'password' : 'text';
     $('#pass-toggle').textContent = showing ? '👁' : '🙈';
-    $('#pass-toggle').setAttribute('aria-label', showing ? '合言葉を表示' : '合言葉を隠す');
+    $('#pass-toggle').setAttribute('aria-label', showing ? 'Show passphrase' : 'Hide passphrase');
   });
 
   $('#tabs').addEventListener('click', (e) => {
@@ -339,7 +339,7 @@ async function init() {
 
   $('#nickname-btn').addEventListener('click', () => {
     const current = getNickname();
-    const name = (prompt('お名前を入力してください', current) || '').trim();
+    const name = (prompt('Enter your name', current) || '').trim();
     if (name) {
       setNickname(name);
       updateNicknameDisplay();
@@ -352,7 +352,7 @@ async function init() {
     ENVELOPE = await res.json();
   } catch {
     $('#lock-form').replaceChildren(
-      el('p', { class: 'error' }, 'データを読み込めませんでした。再読み込みしてください。'));
+      el('p', { class: 'error' }, "Couldn't load data. Please reload the page."));
     return;
   }
 
