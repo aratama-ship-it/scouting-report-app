@@ -72,3 +72,9 @@ main { padding: 16px; max-width: 1100px; margin: 0 auto; }
   color: #14151a; font-weight: 700; padding: 0 16px; cursor: pointer; }
 .comment { border-top: 1px solid var(--line); padding: 8px 0; font-size: 14px; }
 header { flex-wrap: wrap; row-gap: 6px; }
+.card-row { display: flex; gap: 12px; align-items: flex-start; }
+.card-info { flex: 1; min-width: 0; }
+.card-photo { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; flex: none;
+  background: var(--bg); }
+.detail-main .card-photo { width: 120px; height: 120px; }
+.related-grid .card-photo { width: 48px; height: 48px; }

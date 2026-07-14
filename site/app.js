@@ -36,7 +36,7 @@ const rosterState = { q: '', base: '', selected: null };
 
 function performerCard(p, { clickable = false, onClick, extraClass = '', favMarked = false } = {}) {
   const classes = ['card', extraClass, clickable ? 'card-clickable' : ''].filter(Boolean).join(' ');
-  const card = el('div', { class: classes },
+  const info = el('div', { class: 'card-info' },
     el('h3', {},
       favMarked ? el('span', { class: 'fav-mark' }, '★') : '',
       p.name, ' ',
@@ -48,6 +48,11 @@ function performerCard(p, { clickable = false, onClick, extraClass = '', favMark
       link(p.instagram, 'Instagram'),
       link(p.youtube, 'YouTube'),
       link(p.contact, 'Web/Contact')));
+  const body = p.photo
+    ? el('div', { class: 'card-row' },
+        el('img', { class: 'card-photo', src: p.photo, alt: '', loading: 'lazy' }), info)
+    : info;
+  const card = el('div', { class: classes }, body);
   if (clickable) {
     card.addEventListener('click', (e) => {
       if (e.target.closest('a')) return; // SNSリンククリックは詳細遷移させない

@@ -7,6 +7,7 @@ import { parseCandidates } from './parse-candidates.mjs';
 import { diffSnapshots } from './diff-snapshots.mjs';
 import { computeStats } from './stats.mjs';
 import { encrypt } from './crypto.mjs';
+import { researchKey } from './roster-research-key.mjs';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const SOURCE = process.env.SCOUT_SOURCE || join(ROOT, '..', 'scouting-report');
@@ -52,6 +53,17 @@ for (let i = 1; i < snapshots.length; i++) {
 history.reverse();
 
 const latest = snapshots.at(-1);
+
+// 写真をresearchKey(ig:ハンドル等)で各パフォーマーに添付。roster-photos.jsonは非公開の
+// SOURCEフォルダにあり、写真はここでpayloadに入って暗号化される(公開リポジトリには平文で出ない)。
+const photosPath = join(SOURCE, 'roster-photos.json');
+const photos = existsSync(photosPath) ? JSON.parse(readFileSync(photosPath, 'utf8')) : {};
+let photoCount = 0;
+for (const p of latest.performers) {
+  const img = photos[researchKey(p)];
+  if (img) { p.photo = img; photoCount++; }
+}
+
 const payload = {
   generatedAt: new Date().toISOString(),
   roster: latest,
@@ -64,4 +76,4 @@ const envelope = await encrypt(passphrase(), JSON.stringify(payload));
 const outDir = join(ROOT, 'site', 'data');
 mkdirSync(outDir, { recursive: true });
 writeFileSync(join(outDir, 'data.enc'), JSON.stringify(envelope));
-console.log(`OK: 名簿${latest.performers.length}名(${latest.date}) / 候補${candidates.length}週分 / 履歴${history.length}件 → site/data/data.enc`);
+console.log(`OK: 名簿${latest.performers.length}名(${latest.date}) / 写真${photoCount}枚 / 候補${candidates.length}週分 / 履歴${history.length}件 → site/data/data.enc`);
