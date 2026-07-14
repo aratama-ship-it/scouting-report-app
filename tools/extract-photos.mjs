@@ -105,7 +105,7 @@ for (const a of anchors) {
   preview.push({ name: info.name, key, img: dataUrl });
 }
 
-writeFileSync(join(privateDir, 'roster-photos.json'), JSON.stringify(photos), 'utf8');
+writeFileSync(join(privateDir, 'roster-photos-sheet.json'), JSON.stringify(photos), 'utf8');
 
 // 検証用プレビュー(先頭24人): 名前と写真が正しく対応しているか目視確認するため
 const cards = preview.slice(0, 24).map((p) => `

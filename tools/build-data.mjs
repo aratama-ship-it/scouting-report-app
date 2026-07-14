@@ -54,10 +54,16 @@ history.reverse();
 
 const latest = snapshots.at(-1);
 
-// 写真をresearchKey(ig:ハンドル等)で各パフォーマーに添付。roster-photos.jsonは非公開の
-// SOURCEフォルダにあり、写真はここでpayloadに入って暗号化される(公開リポジトリには平文で出ない)。
-const photosPath = join(SOURCE, 'roster-photos.json');
-const photos = existsSync(photosPath) ? JSON.parse(readFileSync(photosPath, 'utf8')) : {};
+// 写真をresearchKey(ig:ハンドル等)で各パフォーマーに添付。2ソースを統合し、シート由来の
+// 高画質写真を優先、無い人はIGアイコンで補完する。どちらも非公開のSOURCEフォルダにあり、
+// payloadに入って暗号化される(公開リポジトリには平文で出ない)。
+const loadPhotos = (name) => {
+  const p = join(SOURCE, name);
+  return existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')) : {};
+};
+const igPhotos = loadPhotos('roster-photos-ig.json');
+const sheetPhotos = loadPhotos('roster-photos-sheet.json');
+const photos = { ...igPhotos, ...sheetPhotos }; // シートが優先
 let photoCount = 0;
 for (const p of latest.performers) {
   const img = photos[researchKey(p)];
