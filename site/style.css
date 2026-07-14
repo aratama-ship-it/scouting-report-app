@@ -78,3 +78,5 @@ header { flex-wrap: wrap; row-gap: 6px; }
   background: var(--bg); }
 .detail-main .card-photo { width: 120px; height: 120px; }
 .related-grid .card-photo { width: 48px; height: 48px; }
+/* 225枚の一覧で画面外カードの描画・画像デコードを省く（スクロールで随時描画） */
+.roster-list > .card { content-visibility: auto; contain-intrinsic-size: auto 92px; }

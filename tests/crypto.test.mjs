@@ -6,7 +6,7 @@ test('暗号化→復号のラウンドトリップ', async () => {
   const envelope = await encrypt('correct horse battery', '{"hello":"世界"}');
   assert.equal(envelope.v, 1);
   assert.equal(envelope.kdf, 'PBKDF2-SHA256');
-  assert.ok(envelope.iter >= 600000);
+  assert.ok(envelope.iter >= 100000); // 強力な合言葉前提での速度/安全のバランス下限
   const plain = await decrypt('correct horse battery', envelope);
   assert.equal(plain, '{"hello":"世界"}');
 });

@@ -103,7 +103,7 @@ function renderRoster() {
   const bases = [...new Set(performers.map((p) => p.base).filter(Boolean))].sort();
 
   const count = el('p', { class: 'muted' });
-  const list = el('div');
+  const list = el('div', { class: 'roster-list' });
 
   const update = () => {
     const filtered = performers.filter((p) => {
@@ -352,7 +352,9 @@ async function init() {
   });
 
   try {
-    const res = await fetch('data/data.enc', { cache: 'no-store' });
+    // no-cache: 毎回ETagで再検証するが、変更が無ければ304で本体(3MB)を再DLしない。
+    // no-storeだと毎回3MBを落とすため重かった。常に最新かつ再訪問は軽い。
+    const res = await fetch('data/data.enc', { cache: 'no-cache' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     ENVELOPE = await res.json();
   } catch {

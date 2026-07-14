@@ -1,6 +1,13 @@
 const enc = new TextEncoder();
 const dec = new TextDecoder();
-const unb64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+// atob + tight loop。Uint8Array.from(str, cb) はコールバックが要素ごとに走り、
+// 数MBのciphertextでは数百ms遅くなるため、単純ループにしている。
+const unb64 = (s) => {
+  const bin = atob(s);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+};
 
 export async function decryptEnvelope(passphrase, envelope) {
   const base = await crypto.subtle.importKey(

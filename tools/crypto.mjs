@@ -1,6 +1,8 @@
 import { webcrypto as crypto } from 'node:crypto';
 
-const ITER = 600000;
+// 15万回。強力な合言葉が前提なので、解錠速度とのバランスでこの値にしている
+// （data.encが写真で3MB化し、スマホでの解錠が重くなったため60万から引き下げ）。
+const ITER = 150000;
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 const b64 = (buf) => Buffer.from(buf).toString('base64');
