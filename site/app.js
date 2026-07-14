@@ -206,7 +206,7 @@ async function renderDetail(name) {
     commentForm,
     commentList);
 
-  const related = findRelated(target, DATA.roster.performers);
+  const related = findRelated(target, DATA.roster.performers, { maxResults: 10 });
   const relatedSection = el('div', { class: 'card' },
     el('h3', {}, 'Related Artists'),
     related.length === 0
