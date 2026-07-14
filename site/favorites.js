@@ -11,7 +11,11 @@ async function callGas(gasUrl, action, params) {
 
 export async function fetchFavorites(gasUrl, passphrase) {
   const body = await callGas(gasUrl, 'list', { passphrase });
-  return { favorites: body.favorites || [], comments: body.comments || [] };
+  return {
+    favorites: body.favorites || [],
+    comments: body.comments || [],
+    requests: body.requests || [],
+  };
 }
 
 export async function toggleFavorite(gasUrl, passphrase, name, artist) {
@@ -20,6 +24,11 @@ export async function toggleFavorite(gasUrl, passphrase, name, artist) {
 
 export async function addComment(gasUrl, passphrase, name, artist, text) {
   await callGas(gasUrl, 'addComment', { passphrase, name, artist, text });
+}
+
+// 更新リクエスト。GAS側でRequestsとして記録し、管理者(Arata)にメール通知が飛ぶ。
+export async function requestUpdate(gasUrl, passphrase, name, artist, text) {
+  await callGas(gasUrl, 'requestUpdate', { passphrase, name, artist, text: text || '' });
 }
 
 const NICK_KEY = 'scout_nickname';

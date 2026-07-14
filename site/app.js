@@ -1,12 +1,12 @@
 import { decryptEnvelope } from './crypto.js';
 import { findRelated } from './related.js';
-import { fetchFavorites, toggleFavorite, addComment, getNickname, setNickname } from './favorites.js';
+import { fetchFavorites, toggleFavorite, addComment, requestUpdate, getNickname, setNickname } from './favorites.js';
 import { GAS_URL } from './favorites-config.js';
 
 let DATA = null;
 let ENVELOPE = null;
 let PASSPHRASE = null;
-let FAVORITES = { favorites: [], comments: [] };
+let FAVORITES = { favorites: [], comments: [], requests: [] };
 let favError = null;
 const $ = (sel) => document.querySelector(sel);
 const PASS_KEY = 'scout_pass';
@@ -173,6 +173,23 @@ async function renderDetail(name) {
   const refreshBtn = el('button', { type: 'button' }, 'Refresh');
   refreshBtn.addEventListener('click', () => renderDetail(target.name));
 
+  // 更新リクエスト: 押すと管理者(Arata)にメール通知が飛ぶ。件数も表示。
+  const reqCount = FAVORITES.requests.filter((r) => r.artist === target.name).length;
+  const requestBtn = el('button', { type: 'button', class: 'request-btn' },
+    `🔔 Request update${reqCount ? ` (${reqCount})` : ''}`);
+  requestBtn.addEventListener('click', async () => {
+    const note = (prompt('Want to know something specific? (optional)') || '').trim();
+    requestBtn.disabled = true;
+    requestBtn.textContent = 'Sending…';
+    try {
+      await requestUpdate(GAS_URL, PASSPHRASE, ensureNickname(), target.name, note);
+      renderDetail(target.name);
+    } catch {
+      requestBtn.disabled = false;
+      requestBtn.textContent = '🔔 Request update (retry)';
+    }
+  });
+
   const commentsForTarget = FAVORITES.comments.filter((c) => c.artist === target.name);
   const commentForm = el('form', { class: 'comment-form' },
     el('textarea', { placeholder: 'Write a comment…', rows: '2' }),
@@ -202,7 +219,7 @@ async function renderDetail(name) {
   const favCommentCard = el('div', { class: 'card' },
     el('h3', {}, 'Favorites & Comments'),
     favError ? el('p', { class: 'error' }, favError) : '',
-    el('div', { class: 'fav-row' }, favBtn, refreshBtn),
+    el('div', { class: 'fav-row' }, favBtn, requestBtn, refreshBtn),
     commentForm,
     commentList);
 
