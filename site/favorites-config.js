@@ -1,2 +1,2 @@
 // gas/DEPLOY.md の手順でデプロイしたGAS WebアプリのURLをここに設定する。
-export const GAS_URL = 'https://script.google.com/macros/s/AKfycbzuSat0EU7p6Bgi_3wF-7ReY9Dr4Gmk2f_TIJAjxyg3crdPulnXii8bY21aYpzWlRtU/exec';
+export const GAS_URL = 'https://script.google.com/macros/s/AKfycbwhToZ-wYLuZYzuvg5_wzYowag-6hhzjtRRe-ZaoT-y5rCzij2amwAK6T--170JB4-E/exec';

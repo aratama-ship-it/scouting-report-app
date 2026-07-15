@@ -5,8 +5,23 @@ function getPassphrase_() {
   return PropertiesService.getScriptProperties().getProperty('PASSPHRASE');
 }
 
+// スプレッドシートはIDで開く（openById=標準のspreadsheets権限。getActiveSpreadsheetの
+// currentonly権限は他の権限追加で壊れやすく、匿名Webアプリで問題を起こしたため使わない）。
+// シートIDはコードに直書きせず、スクリプトプロパティ SHEET_ID から読む。
+function ss_() {
+  var id = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
+  return SpreadsheetApp.openById(id);
+}
+
+// 権限承認用: エディタの実行メニューから一度これを実行すると spreadsheets 権限の
+// 承認画面が出る（末尾に _ が無いのでメニューに表示される）。
+function authorizeApp() {
+  getSheet_();
+  getCandidatesSheet_();
+}
+
 function getSheet_() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = ss_();
   let sheet = ss.getSheetByName(SHEET_NAME);
   if (!sheet) {
     sheet = ss.insertSheet(SHEET_NAME);
@@ -50,11 +65,12 @@ function doGet(e) {
     return jsonOutput_({ ok: true });
   }
 
-  // 更新リクエスト: Favoritesシートに type=request で記録し、管理者にメール通知する。
+  // 更新リクエスト: Favoritesシートに type=request で記録する。
+  // 通知はMac側の定期タスクがこのlistをポーリングして行う（GASからメール送信すると
+  // spreadsheets.currentonly権限と競合してWebアプリ全体が壊れるため、メールは使わない）。
   if (p.action === 'requestUpdate') {
     if (!p.artist) return jsonOutput_({ error: 'artist is required' });
     sheet.appendRow([new Date().toISOString(), p.name || '', p.artist, 'request', p.text || '']);
-    notifyRequest_(p.name || '(no name)', p.artist, p.text || '');
     return jsonOutput_({ ok: true });
   }
 
@@ -67,30 +83,10 @@ function doGet(e) {
   return jsonOutput_({ favorites, comments, requests });
 }
 
-// 更新リクエストを管理者にメール通知。宛先はスクリプトプロパティ NOTIFY_EMAIL、
-// 無ければこのスクリプトの実行者(=オーナー)のアドレス。メール失敗でも記録は成功させる。
-function notifyRequest_(name, artist, text) {
-  try {
-    var to = PropertiesService.getScriptProperties().getProperty('NOTIFY_EMAIL')
-      || Session.getEffectiveUser().getEmail();
-    if (!to) return;
-    MailApp.sendEmail({
-      to: to,
-      subject: '[Scouting] 更新リクエスト: ' + artist,
-      body: name + ' さんが「' + artist + '」の更新・詳細をリクエストしました。\n\n'
-        + 'メモ: ' + (text || '(なし)') + '\n\n'
-        + '記録先: スプレッドシートの Favorites タブ (type=request)\n'
-        + 'アプリ: https://aratama-ship-it.github.io/scouting-report-app/',
-    });
-  } catch (err) {
-    // 通知失敗はリクエスト記録の成否に影響させない
-  }
-}
-
 // 週次スカウティング候補の自動追記。本名簿には触れず「Candidates」タブに積む。
 // 承認した候補をユーザーが手で本名簿へ移す運用。
 function getCandidatesSheet_() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = ss_();
   let sheet = ss.getSheetByName(CANDIDATES_SHEET);
   if (!sheet) {
     sheet = ss.insertSheet(CANDIDATES_SHEET);
