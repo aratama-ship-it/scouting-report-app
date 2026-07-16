@@ -216,6 +216,19 @@ async function renderDetail(name) {
           el('div', { class: 'muted' }, `${c.name} · ${formatTimestamp(c.timestamp)}`),
           el('div', {}, c.text))));
 
+  // Web調査で確認済みの紹介文(出典・確度つき)。ビルド時にdata.encへ埋め込まれる
+  const CONF_LABEL = { high: 'High', medium: 'Medium', low: 'Low' };
+  const aboutCard = target.bio
+    ? el('div', { class: 'card' },
+        el('h3', {}, 'About'),
+        el('p', { class: 'bio-text' }, target.bio.fact),
+        el('div', { class: 'bio-meta' },
+          el('span', { class: `tag conf-${target.bio.confidence}` },
+            `Confidence: ${CONF_LABEL[target.bio.confidence] || target.bio.confidence}`),
+          link(target.bio.source, `Source: ${target.bio.sourceLabel || 'link'}`)),
+        target.bio.caveat ? el('p', { class: 'bio-caveat' }, `⚠ ${target.bio.caveat}`) : '')
+    : '';
+
   const favCommentCard = el('div', { class: 'card' },
     el('h3', {}, 'Favorites & Comments'),
     favError ? el('p', { class: 'error' }, favError) : '',
@@ -236,6 +249,7 @@ async function renderDetail(name) {
   $('#view').replaceChildren(
     back,
     performerCard(target, { clickable: false, extraClass: 'detail-main' }),
+    aboutCard,
     favCommentCard,
     relatedSection);
 }

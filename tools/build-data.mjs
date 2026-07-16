@@ -57,17 +57,32 @@ const latest = snapshots.at(-1);
 // 写真をresearchKey(ig:ハンドル等)で各パフォーマーに添付。2ソースを統合し、シート由来の
 // 高画質写真を優先、無い人はIGアイコンで補完する。どちらも非公開のSOURCEフォルダにあり、
 // payloadに入って暗号化される(公開リポジトリには平文で出ない)。
-const loadPhotos = (name) => {
+const loadJson = (name) => {
   const p = join(SOURCE, name);
   return existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')) : {};
 };
-const igPhotos = loadPhotos('roster-photos-ig.json');
-const sheetPhotos = loadPhotos('roster-photos-sheet.json');
+const igPhotos = loadJson('roster-photos-ig.json');
+const sheetPhotos = loadJson('roster-photos-sheet.json');
 const photos = { ...igPhotos, ...sheetPhotos }; // シートが優先
 let photoCount = 0;
 for (const p of latest.performers) {
   const img = photos[researchKey(p)];
   if (img) { p.photo = img; photoCount++; }
+}
+
+// Web調査で確認した紹介文(出典・確度つき)を添付。英訳版を優先し、無ければ日本語版。
+// どちらも非公開のSOURCEフォルダにあり、暗号化されてdata.encに入る。
+const researchEn = loadJson('roster-research-en.json');
+const researchJa = loadJson('roster-research.json');
+let bioCount = 0;
+for (const p of latest.performers) {
+  const key = researchKey(p);
+  const r = researchEn[key] || researchJa[key];
+  if (r && r.fact) {
+    p.bio = { fact: r.fact, source: r.source, sourceLabel: r.sourceLabel, confidence: r.confidence };
+    if (r.caveat) p.bio.caveat = r.caveat;
+    bioCount++;
+  }
 }
 
 const payload = {
@@ -82,4 +97,4 @@ const envelope = await encrypt(passphrase(), JSON.stringify(payload));
 const outDir = join(ROOT, 'site', 'data');
 mkdirSync(outDir, { recursive: true });
 writeFileSync(join(outDir, 'data.enc'), JSON.stringify(envelope));
-console.log(`OK: 名簿${latest.performers.length}名(${latest.date}) / 写真${photoCount}枚 / 候補${candidates.length}週分 / 履歴${history.length}件 → site/data/data.enc`);
+console.log(`OK: 名簿${latest.performers.length}名(${latest.date}) / 写真${photoCount}枚 / 紹介文${bioCount}件 / 候補${candidates.length}週分 / 履歴${history.length}件 → site/data/data.enc`);
