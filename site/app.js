@@ -1,16 +1,8 @@
 import { decryptEnvelope } from './crypto.js';
 import { findRelated } from './related.js';
-import {
-  fetchFavorites, toggleFavorite, addComment, requestUpdate, getNickname, setNickname,
-  setCandidateStatus, CANDIDATE_STATUSES,
-} from './favorites.js';
-import { GAS_URL } from './favorites-config.js';
 
 let DATA = null;
 let ENVELOPE = null;
-let PASSPHRASE = null;
-let FAVORITES = { favorites: [], comments: [], requests: [], candidateStatuses: {} };
-let favError = null;
 const $ = (sel) => document.querySelector(sel);
 const PASS_KEY = 'scout_pass';
 
@@ -40,7 +32,7 @@ export function link(url, label) {
     : '';
 }
 
-// --- ビュー（Task 8〜10 で実装を差し替える） ---
+// --- ビュー ---
 const rosterState = { q: '', base: '', selected: null };
 
 function performerCard(p, { clickable = false, onClick, extraClass = '', favMarked = false } = {}) {
@@ -72,29 +64,6 @@ function performerCard(p, { clickable = false, onClick, extraClass = '', favMark
     });
   }
   return card;
-}
-
-function ensureNickname() {
-  let name = getNickname();
-  if (!name) {
-    name = (prompt('Enter your name (shown to the team)') || '').trim();
-    if (name) setNickname(name);
-  }
-  return name;
-}
-
-function updateNicknameDisplay() {
-  const name = getNickname();
-  $('#nickname-btn').textContent = name ? `👤 ${name}` : '👤 No name set';
-}
-
-async function loadFavorites() {
-  try {
-    FAVORITES = await fetchFavorites(GAS_URL, PASSPHRASE);
-    favError = null;
-  } catch {
-    favError = "Couldn't load favorites/comments";
-  }
 }
 
 function formatTimestamp(ts) {
@@ -133,7 +102,7 @@ function effectiveRoster() {
     for (const c of week.items) {
       if (seen.has(c.name) || existingNames.has(c.name)) { seen.add(c.name); continue; }
       seen.add(c.name);
-      if (FAVORITES.candidateStatuses[c.name]?.status === '採用') adopted.push(candidateAsPerformer(c));
+      if (DATA.candidateStatuses[c.name]?.status === '採用') adopted.push(candidateAsPerformer(c));
     }
   }
   return adopted.length ? [...DATA.roster.performers, ...adopted] : DATA.roster.performers;
@@ -160,7 +129,7 @@ function renderRoster() {
       return true;
     });
     count.textContent = `${filtered.length} / ${performers.length} artists`;
-    const favoritedNames = new Set(FAVORITES.favorites.map((f) => f.artist));
+    const favoritedNames = new Set(DATA.favorites.map((f) => f.artist));
     list.replaceChildren(...filtered.map((p) => performerCard(p, {
       clickable: true, onClick: openDetail, favMarked: favoritedNames.has(p.name),
     })));
@@ -179,7 +148,27 @@ function renderRoster() {
   $('#view').replaceChildren(el('div', { class: 'filters' }, search, select), count, list);
   update();
 }
-async function renderDetail(name) {
+
+// ☆お気に入り・💬コメントは読み取り専用（2026-09-24〜、CSVが正本）。
+// 誰が付けたかの一覧をtitle属性に出す。追加・削除はCSVを直接編集するか、AIに伝えて週次反映してもらう。
+function favDisplay(artistName) {
+  const favs = DATA.favorites.filter((f) => f.artist === artistName);
+  const names = favs.map((f) => f.name).filter(Boolean).join(', ');
+  return el('span', { class: 'fav-count', title: names ? `Favorited by: ${names}` : '' },
+    `${favs.length ? '★' : '☆'} ${favs.length}`);
+}
+
+function commentListFor(artistName) {
+  const list = DATA.comments.filter((c) => c.artist === artistName);
+  return el('div', {},
+    list.length === 0
+      ? el('p', { class: 'muted' }, 'No comments yet')
+      : list.map((c) => el('div', { class: 'comment' },
+          el('div', { class: 'muted' }, `${c.name || 'Anonymous'} · ${formatTimestamp(c.timestamp)}`),
+          el('div', {}, c.text))));
+}
+
+function renderDetail(name) {
   const target = effectiveRoster().find((p) => p.name === name);
   if (!target) {
     rosterState.selected = null;
@@ -187,79 +176,11 @@ async function renderDetail(name) {
     return;
   }
 
-  $('#view').replaceChildren(el('p', { class: 'muted' }, 'Loading…'));
-  await loadFavorites();
-  if (rosterState.selected !== name) return; // don't render if another card was selected meanwhile
-
   const back = el('button', { type: 'button', class: 'back-btn' }, '← Back to roster');
   back.addEventListener('click', () => {
     rosterState.selected = null;
     renderRoster();
   });
-
-  const myName = getNickname();
-  const favCount = FAVORITES.favorites.filter((f) => f.artist === target.name).length;
-  const iAmFavorited = FAVORITES.favorites.some(
-    (f) => f.artist === target.name && f.name === myName);
-
-  const favBtn = el('button', {
-    type: 'button', class: 'fav-btn' + (iAmFavorited ? ' fav-active' : ''),
-  }, `${iAmFavorited ? '★' : '☆'} ${favCount}`);
-  favBtn.addEventListener('click', async () => {
-    favBtn.disabled = true;
-    try {
-      await toggleFavorite(GAS_URL, PASSPHRASE, ensureNickname(), target.name);
-      renderDetail(target.name);
-    } catch {
-      favBtn.disabled = false;
-    }
-  });
-
-  const refreshBtn = el('button', { type: 'button' }, 'Refresh');
-  refreshBtn.addEventListener('click', () => renderDetail(target.name));
-
-  // 更新リクエスト: 押すと管理者(Arata)にメール通知が飛ぶ。件数も表示。
-  const reqCount = FAVORITES.requests.filter((r) => r.artist === target.name).length;
-  const requestBtn = el('button', { type: 'button', class: 'request-btn' },
-    `🔔 Request update${reqCount ? ` (${reqCount})` : ''}`);
-  requestBtn.addEventListener('click', async () => {
-    const note = (prompt('Want to know something specific? (optional)') || '').trim();
-    requestBtn.disabled = true;
-    requestBtn.textContent = 'Sending…';
-    try {
-      await requestUpdate(GAS_URL, PASSPHRASE, ensureNickname(), target.name, note);
-      renderDetail(target.name);
-    } catch {
-      requestBtn.disabled = false;
-      requestBtn.textContent = '🔔 Request update (retry)';
-    }
-  });
-
-  const commentsForTarget = FAVORITES.comments.filter((c) => c.artist === target.name);
-  const commentForm = el('form', { class: 'comment-form' },
-    el('textarea', { placeholder: 'Write a comment…', rows: '2' }),
-    el('button', { type: 'submit' }, 'Post'));
-  commentForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const textarea = commentForm.querySelector('textarea');
-    const text = textarea.value.trim();
-    if (!text) return;
-    const submitBtn = commentForm.querySelector('button');
-    submitBtn.disabled = true;
-    try {
-      await addComment(GAS_URL, PASSPHRASE, ensureNickname(), target.name, text);
-      renderDetail(target.name);
-    } catch {
-      submitBtn.disabled = false;
-    }
-  });
-
-  const commentList = el('div', {},
-    commentsForTarget.length === 0
-      ? el('p', { class: 'muted' }, 'No comments yet')
-      : commentsForTarget.map((c) => el('div', { class: 'comment' },
-          el('div', { class: 'muted' }, `${c.name} · ${formatTimestamp(c.timestamp)}`),
-          el('div', {}, c.text))));
 
   // Web調査で確認済みの紹介文(出典・確度つき)。ビルド時にdata.encへ埋め込まれる
   const CONF_LABEL = { high: 'High', medium: 'Medium', low: 'Low' };
@@ -276,10 +197,8 @@ async function renderDetail(name) {
 
   const favCommentCard = el('div', { class: 'card' },
     el('h3', {}, 'Favorites & Comments'),
-    favError ? el('p', { class: 'error' }, favError) : '',
-    el('div', { class: 'fav-row' }, favBtn, requestBtn, refreshBtn),
-    commentForm,
-    commentList);
+    el('div', { class: 'fav-row' }, favDisplay(target.name)),
+    commentListFor(target.name));
 
   const related = findRelated(target, DATA.roster.performers, { maxResults: 10 });
   const relatedSection = el('div', { class: 'card' },
@@ -306,56 +225,9 @@ const STATUS_SLUG = {
 };
 
 function candidateCard(c, rosterNames) {
-  const currentStatus = FAVORITES.candidateStatuses[c.name]?.status || '未確認';
-  const myName = getNickname();
-  const favCount = FAVORITES.favorites.filter((f) => f.artist === c.name).length;
-  const iAmFavorited = FAVORITES.favorites.some((f) => f.artist === c.name && f.name === myName);
-  const commentCount = FAVORITES.comments.filter((cm) => cm.artist === c.name).length;
-
-  const statusSelect = el('select',
-    { class: `status-select status-${STATUS_SLUG[currentStatus] || 'unconfirmed'}` },
-    CANDIDATE_STATUSES.map((s) => el('option', { value: s }, s)));
-  statusSelect.value = currentStatus;
-  statusSelect.addEventListener('change', async () => {
-    const next = statusSelect.value;
-    statusSelect.disabled = true;
-    try {
-      await setCandidateStatus(GAS_URL, PASSPHRASE, ensureNickname(), c.name, next);
-      await loadFavorites();
-      renderCandidatesList();
-    } catch {
-      statusSelect.disabled = false;
-      statusSelect.value = currentStatus;
-    }
-  });
-
-  const favBtn = el('button', {
-    type: 'button', class: 'fav-btn' + (iAmFavorited ? ' fav-active' : ''),
-  }, `${iAmFavorited ? '★' : '☆'} ${favCount}`);
-  favBtn.addEventListener('click', async () => {
-    favBtn.disabled = true;
-    try {
-      await toggleFavorite(GAS_URL, PASSPHRASE, ensureNickname(), c.name);
-      await loadFavorites();
-      renderCandidatesList();
-    } catch {
-      favBtn.disabled = false;
-    }
-  });
-
-  const commentBtn = el('button', { type: 'button', class: 'request-btn' }, `💬 ${commentCount}`);
-  commentBtn.addEventListener('click', async () => {
-    const text = (prompt(`Comment on ${c.name}`) || '').trim();
-    if (!text) return;
-    commentBtn.disabled = true;
-    try {
-      await addComment(GAS_URL, PASSPHRASE, ensureNickname(), c.name, text);
-      await loadFavorites();
-      renderCandidatesList();
-    } catch {
-      commentBtn.disabled = false;
-    }
-  });
+  const currentStatus = DATA.candidateStatuses[c.name]?.status || '未確認';
+  const statusTag = el('span',
+    { class: `tag status-tag status-${STATUS_SLUG[currentStatus] || 'unconfirmed'}` }, currentStatus);
 
   return el('div', { class: 'card' },
     el('h3', {},
@@ -369,10 +241,11 @@ function candidateCard(c, rosterNames) {
     c.reason ? el('div', { class: 'muted' }, '💡 ', mdBold(c.reason)) : '',
     c.status ? el('div', { class: 'muted' }, '✔️ ', mdBold(c.status)) : '',
     el('div', { class: 'links' }, link(c.url, 'Official site')),
-    el('div', { class: 'fav-row' }, statusSelect, favBtn, commentBtn));
+    el('div', { class: 'fav-row' }, statusTag, favDisplay(c.name),
+      el('span', { class: 'muted' }, `💬 ${DATA.comments.filter((cm) => cm.artist === c.name).length}`)));
 }
 
-function renderCandidatesList() {
+function renderCandidates() {
   if (DATA.candidates.length === 0) {
     $('#view').replaceChildren(el('p', { class: 'muted' }, 'No candidate data yet'));
     return;
@@ -388,7 +261,7 @@ function renderCandidatesList() {
       }, o === '' ? 'All' : o);
       btn.addEventListener('click', () => {
         candidatesState.origin = o;
-        renderCandidatesList();
+        renderCandidates();
       });
       return btn;
     }));
@@ -403,21 +276,10 @@ function renderCandidatesList() {
     ];
   });
 
-  $('#view').replaceChildren(
-    favError ? el('p', { class: 'error' }, favError) : '',
-    toggle,
+  $('#view').replaceChildren(toggle,
     ...(sections.length ? sections : [el('p', { class: 'muted' }, 'No candidates for this filter')]));
 }
 
-async function renderCandidates() {
-  if (DATA.candidates.length === 0) {
-    $('#view').replaceChildren(el('p', { class: 'muted' }, 'No candidate data yet'));
-    return;
-  }
-  $('#view').replaceChildren(el('p', { class: 'muted' }, 'Loading…'));
-  await loadFavorites();
-  renderCandidatesList();
-}
 function renderHistory() {
   if (DATA.history.length === 0) {
     $('#view').replaceChildren(el('p', { class: 'muted' },
@@ -471,18 +333,12 @@ function showView(name) {
 
 async function unlock(pass) {
   DATA = await decryptEnvelope(pass, ENVELOPE); // 失敗時は例外
-  PASSPHRASE = pass;
   localStorage.setItem(PASS_KEY, pass);
   $('#lock').hidden = true;
   $('#app').hidden = false;
   $('#meta').textContent =
     `As of ${DATA.roster.date} / ${DATA.roster.performers.length} artists`;
-  ensureNickname();
-  updateNicknameDisplay();
   showView('roster');
-  loadFavorites().then(() => {
-    if (!rosterState.selected) renderRoster();
-  });
 }
 
 async function init() {
@@ -514,15 +370,6 @@ async function init() {
   $('#lock-btn').addEventListener('click', () => {
     localStorage.removeItem(PASS_KEY);
     location.reload();
-  });
-
-  $('#nickname-btn').addEventListener('click', () => {
-    const current = getNickname();
-    const name = (prompt('Enter your name', current) || '').trim();
-    if (name) {
-      setNickname(name);
-      updateNicknameDisplay();
-    }
   });
 
   try {

@@ -59,20 +59,7 @@ main { padding: 16px; max-width: 1100px; margin: 0 auto; }
 .related-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
 .fav-mark { color: var(--accent); margin-right: 4px; }
 .fav-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-.fav-btn { background: none; border: 1px solid var(--line); color: var(--text);
-  border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 14px; }
-.fav-btn.fav-active { border-color: var(--accent); color: var(--accent); }
-.fav-btn:disabled, #nickname-btn:disabled { opacity: .5; cursor: default; }
-.request-btn { background: none; border: 1px solid var(--accent); color: var(--accent);
-  border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 14px; }
-.request-btn:disabled { opacity: .5; cursor: default; }
-#nickname-btn { background: none; border: 1px solid var(--line); color: var(--muted);
-  border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 12px; }
-.comment-form { display: flex; gap: 8px; margin-bottom: 12px; }
-.comment-form textarea { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--line);
-  background: var(--bg); color: var(--text); font-family: inherit; font-size: 14px; resize: vertical; }
-.comment-form button { border: none; border-radius: 8px; background: var(--accent);
-  color: #14151a; font-weight: 700; padding: 0 16px; cursor: pointer; }
+.fav-count { color: var(--muted); font-size: 14px; }
 .comment { border-top: 1px solid var(--line); padding: 8px 0; font-size: 14px; }
 header { flex-wrap: wrap; row-gap: 6px; }
 .card-row { display: flex; gap: 12px; align-items: flex-start; }
@@ -100,12 +87,9 @@ header { flex-wrap: wrap; row-gap: 6px; }
 .origin-pill { background: none; border: 1px solid var(--line); color: var(--muted);
   border-radius: 999px; padding: 5px 14px; font-size: 13px; cursor: pointer; }
 .origin-pill.active { border-color: var(--accent); color: var(--accent); }
-.status-select { border-radius: 8px; padding: 8px 10px; font-size: 13px;
-  border: 1px solid var(--line); background: var(--bg); color: var(--text); }
-.status-select:disabled { opacity: .5; }
-.status-select.status-unconfirmed { border-color: var(--line); color: var(--muted); }
-.status-select.status-considering { border-color: #8fb4e8; color: #8fb4e8; }
-.status-select.status-contacted { border-color: var(--accent); color: var(--accent); }
-.status-select.status-adopted { border-color: var(--ok); color: var(--ok); }
-.status-select.status-hold { border-color: #c9a25a; color: #c9a25a; }
-.status-select.status-declined { border-color: var(--danger); color: var(--danger); }
+.status-tag.status-unconfirmed { border-color: var(--line); color: var(--muted); }
+.status-tag.status-considering { border-color: #8fb4e8; color: #8fb4e8; }
+.status-tag.status-contacted { border-color: var(--accent); color: var(--accent); }
+.status-tag.status-adopted { border-color: var(--ok); color: var(--ok); }
+.status-tag.status-hold { border-color: #c9a25a; color: #c9a25a; }
+.status-tag.status-declined { border-color: var(--danger); color: var(--danger); }

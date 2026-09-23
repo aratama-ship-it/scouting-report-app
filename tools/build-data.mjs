@@ -8,6 +8,7 @@ import { diffSnapshots } from './diff-snapshots.mjs';
 import { computeStats } from './stats.mjs';
 import { encrypt } from './crypto.mjs';
 import { researchKey } from './roster-research-key.mjs';
+import { parseCsvObjects } from './parse-csv.mjs';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const SOURCE = process.env.SCOUT_SOURCE || join(ROOT, '..', 'scouting-report');
@@ -85,16 +86,40 @@ for (const p of latest.performers) {
   }
 }
 
+// チームデータ（☆お気に入り・💬コメント・候補の選考ステータス）。
+// 2026-09-24よりGoogle Sheets/GASを廃止し、scouting-report/直下のCSVを正本にした
+// （本人がExcel/Numbers等で直接編集、またはAIが週次実行時にチャット内容を反映）。
+const loadCsv = (name) => {
+  const p = join(SOURCE, name);
+  return existsSync(p) ? parseCsvObjects(readFileSync(p, 'utf8')) : [];
+};
+const favorites = loadCsv('favorites.csv')
+  .filter((r) => r.artist)
+  .map((r) => ({ name: r.name || '', artist: r.artist, timestamp: r.timestamp || '' }));
+const comments = loadCsv('comments.csv')
+  .filter((r) => r.artist && r.text)
+  .map((r) => ({ name: r.name || '', artist: r.artist, text: r.text, timestamp: r.timestamp || '' }));
+const candidateStatuses = {};
+loadCsv('candidate-status.csv').forEach((r) => {
+  if (!r.artist || !r.status) return;
+  candidateStatuses[r.artist] = {
+    status: r.status, note: r.note || '', updatedBy: r.updated_by || '', updatedAt: r.updated_at || '',
+  };
+});
+
 const payload = {
   generatedAt: new Date().toISOString(),
   roster: latest,
   candidates,
   history,
   stats: computeStats(latest.performers),
+  favorites,
+  comments,
+  candidateStatuses,
 };
 
 const envelope = await encrypt(passphrase(), JSON.stringify(payload));
 const outDir = join(ROOT, 'site', 'data');
 mkdirSync(outDir, { recursive: true });
 writeFileSync(join(outDir, 'data.enc'), JSON.stringify(envelope));
-console.log(`OK: 名簿${latest.performers.length}名(${latest.date}) / 写真${photoCount}枚 / 紹介文${bioCount}件 / 候補${candidates.length}週分 / 履歴${history.length}件 → site/data/data.enc`);
+console.log(`OK: 名簿${latest.performers.length}名(${latest.date}) / 写真${photoCount}枚 / 紹介文${bioCount}件 / 候補${candidates.length}週分 / 履歴${history.length}件 / ☆${favorites.length}件 / 💬${comments.length}件 / 選考ステータス${Object.keys(candidateStatuses).length}件 → site/data/data.enc`);

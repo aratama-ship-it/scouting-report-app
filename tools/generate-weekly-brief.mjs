@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { parseSnapshot } from './parse-snapshot.mjs';
 import { parseCandidates } from './parse-candidates.mjs';
 import { diffSnapshots } from './diff-snapshots.mjs';
-import { GAS_URL } from '../site/favorites-config.js';
+import { parseCsvObjects } from './parse-csv.mjs';
 
 const today = process.argv[2];
 if (!today || !/^\d{4}-\d{2}-\d{2}$/.test(today)) {
@@ -39,24 +39,14 @@ const openDecisions = existsSync(openDecisionsFile)
       .map((l) => l.trim()).filter((l) => l.startsWith('- ')).map((l) => l.slice(2))
   : [];
 
-let candidateStatuses = {};
-let gasNote = '取得できず';
-try {
-  const passphrase = readFileSync(join(root, '.secret'), 'utf8').trim();
-  const url = new URL(GAS_URL);
-  url.searchParams.set('action', 'list');
-  url.searchParams.set('passphrase', passphrase);
-  const res = await fetch(url);
-  if (res.ok) {
-    const body = await res.json();
-    if (!body.error) { candidateStatuses = body.candidateStatuses || {}; gasNote = 'OK'; }
-    else gasNote = `GAS error: ${body.error}`;
-  } else {
-    gasNote = `HTTP ${res.status}`;
-  }
-} catch (err) {
-  gasNote = `例外: ${err.message}`;
+const statusCsvPath = join(SOURCE, 'candidate-status.csv');
+const candidateStatuses = {};
+if (existsSync(statusCsvPath)) {
+  parseCsvObjects(readFileSync(statusCsvPath, 'utf8')).forEach((r) => {
+    if (r.artist && r.status) candidateStatuses[r.artist] = { status: r.status, note: r.note || '' };
+  });
 }
+const statusNote = `${Object.keys(candidateStatuses).length}件`;
 
 // 停滞中: 今回以外の週に出た候補で、ステータスが未設定 or 「未確認」のまま止まっているもの
 const allWeekFiles = readdirSync(candidatesDir).filter((f) => f.endsWith('.md')).sort();
@@ -131,7 +121,7 @@ const html = `<!DOCTYPE html>
 <body>
 <div class="wrap">
   <h1>週次スカウティングブリーフ ${today}</h1>
-  <div class="meta">新規候補${thisWeek.items.length}件／今回の昇格${promoted.length}件／候補ステータス取得: ${esc(gasNote)}</div>
+  <div class="meta">新規候補${thisWeek.items.length}件／今回の昇格${promoted.length}件／候補ステータス: ${esc(statusNote)}</div>
 
   <div class="ask">
     <h2>判断してほしいこと</h2>
@@ -156,7 +146,7 @@ const html = `<!DOCTYPE html>
     ${stale.map(staleRowHtml).join('')}
   </table>` : ''}
 
-  <div class="foot">自動生成: tools/generate-weekly-brief.mjs ／ 候補ステータスの変更はアプリの「Candidates」タブから。</div>
+  <div class="foot">自動生成: tools/generate-weekly-brief.mjs ／ 候補ステータスの変更は scouting-report/candidate-status.csv を編集（本人が直接、またはAIに伝えて反映）。</div>
 </div>
 </body>
 </html>
