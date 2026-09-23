@@ -1,5 +1,6 @@
 const SHEET_NAME = 'Favorites';
-const CANDIDATES_SHEET = 'Candidates';
+const CANDIDATE_STATUS_SHEET = 'CandidateStatus';
+const VALID_STATUSES = ['未確認', '検討中', '連絡済み', '採用', '保留', '見送り'];
 
 function getPassphrase_() {
   return PropertiesService.getScriptProperties().getProperty('PASSPHRASE');
@@ -17,7 +18,7 @@ function ss_() {
 // 承認画面が出る（末尾に _ が無いのでメニューに表示される）。
 function authorizeApp() {
   getSheet_();
-  getCandidatesSheet_();
+  getCandidateStatusSheet_();
 }
 
 function getSheet_() {
@@ -26,6 +27,19 @@ function getSheet_() {
   if (!sheet) {
     sheet = ss.insertSheet(SHEET_NAME);
     sheet.appendRow(['timestamp', 'name', 'artist', 'type', 'text']);
+  }
+  return sheet;
+}
+
+// 候補の選考ステータス（1候補=1行、artist列をキーに上書き）。
+// 2026-09-23: 候補パイプライン化の一環で「Candidates」タブへの自動追記（addCandidates）を廃止し、
+// こちらに一本化した。候補一覧そのものの正本はscouting-report/candidates/（ローカル）。
+function getCandidateStatusSheet_() {
+  const ss = ss_();
+  let sheet = ss.getSheetByName(CANDIDATE_STATUS_SHEET);
+  if (!sheet) {
+    sheet = ss.insertSheet(CANDIDATE_STATUS_SHEET);
+    sheet.appendRow(['timestamp', 'name', 'artist', 'status', 'note']);
   }
   return sheet;
 }
@@ -40,6 +54,21 @@ function doGet(e) {
   const expected = getPassphrase_();
   if (!expected || p.passphrase !== expected) {
     return jsonOutput_({ error: 'invalid passphrase' });
+  }
+
+  if (p.action === 'setCandidateStatus') {
+    if (!p.artist || !p.status) return jsonOutput_({ error: 'artist and status are required' });
+    if (VALID_STATUSES.indexOf(p.status) === -1) return jsonOutput_({ error: 'invalid status' });
+    const statusSheet = getCandidateStatusSheet_();
+    const statusRows = statusSheet.getDataRange().getValues().slice(1);
+    const rowIndex = statusRows.findIndex((r) => r[2] === p.artist);
+    const row = [new Date().toISOString(), p.name || '', p.artist, p.status, p.note || ''];
+    if (rowIndex >= 0) {
+      statusSheet.getRange(rowIndex + 2, 1, 1, row.length).setValues([row]); // +1ヘッダー +1 1-indexed
+    } else {
+      statusSheet.appendRow(row);
+    }
+    return jsonOutput_({ ok: true });
   }
 
   const sheet = getSheet_();
@@ -80,57 +109,12 @@ function doGet(e) {
     .map((r) => ({ timestamp: r[0], name: r[1], artist: r[2], text: r[4] }));
   const requests = rows.filter((r) => r[3] === 'request')
     .map((r) => ({ timestamp: r[0], name: r[1], artist: r[2], text: r[4] }));
-  return jsonOutput_({ favorites, comments, requests });
-}
 
-// 週次スカウティング候補の自動追記。本名簿には触れず「Candidates」タブに積む。
-// 承認した候補をユーザーが手で本名簿へ移す運用。
-function getCandidatesSheet_() {
-  const ss = ss_();
-  let sheet = ss.getSheetByName(CANDIDATES_SHEET);
-  if (!sheet) {
-    sheet = ss.insertSheet(CANDIDATES_SHEET);
-    sheet.appendRow(['added_date', 'name', 'category', 'size', 'skills', 'url', 'reason', 'status']);
-  }
-  return sheet;
-}
+  const statusRows = getCandidateStatusSheet_().getDataRange().getValues().slice(1);
+  const candidateStatuses = {};
+  statusRows.forEach((r) => {
+    candidateStatuses[r[2]] = { timestamp: r[0], name: r[1], status: r[3], note: r[4] };
+  });
 
-function doPost(e) {
-  let body;
-  try {
-    body = JSON.parse(e.postData.contents);
-  } catch (err) {
-    return jsonOutput_({ error: 'invalid JSON body' });
-  }
-  const expected = getPassphrase_();
-  if (!expected || body.passphrase !== expected) {
-    return jsonOutput_({ error: 'invalid passphrase' });
-  }
-
-  if (body.action === 'addCandidates') {
-    if (!Array.isArray(body.candidates) || body.candidates.length === 0) {
-      return jsonOutput_({ error: 'candidates array is required' });
-    }
-    const sheet = getCandidatesSheet_();
-    const existing = new Set(
-      sheet.getDataRange().getValues().slice(1).map((r) => String(r[1]).trim()));
-    const date = body.date || new Date().toISOString().slice(0, 10);
-    let added = 0;
-    const skipped = [];
-    for (const c of body.candidates) {
-      const name = String(c.name || '').trim();
-      if (!name) continue;
-      if (existing.has(name)) {
-        skipped.push(name);
-        continue;
-      }
-      sheet.appendRow([date, name, c.category || '', c.size || '',
-        c.skills || '', c.url || '', c.reason || '', c.status || '']);
-      existing.add(name);
-      added++;
-    }
-    return jsonOutput_({ ok: true, added, skipped });
-  }
-
-  return jsonOutput_({ error: 'unknown action' });
+  return jsonOutput_({ favorites, comments, requests, candidateStatuses });
 }

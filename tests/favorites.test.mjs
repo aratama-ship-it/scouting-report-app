@@ -1,6 +1,8 @@
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { fetchFavorites, toggleFavorite, addComment, requestUpdate } from '../site/favorites.js';
+import {
+  fetchFavorites, toggleFavorite, addComment, requestUpdate, setCandidateStatus,
+} from '../site/favorites.js';
 
 afterEach(() => { delete globalThis.fetch; });
 
@@ -14,7 +16,9 @@ test('fetchFavorites は action=list と passphrase を送り、結果を整形�
     };
   };
   const result = await fetchFavorites('https://example.com/exec', 'pass1');
-  assert.deepEqual(result, { favorites: [{ name: 'A', artist: 'X' }], comments: [], requests: [] });
+  assert.deepEqual(result, {
+    favorites: [{ name: 'A', artist: 'X' }], comments: [], requests: [], candidateStatuses: {},
+  });
   assert.match(capturedUrl, /action=list/);
   assert.match(capturedUrl, /passphrase=pass1/);
 });
@@ -66,4 +70,25 @@ test('requestUpdate は action=requestUpdate と artist を送る', async () => 
   assert.match(capturedUrl, /action=requestUpdate/);
   assert.match(capturedUrl, new RegExp(`artist=Zeroko`));
   assert.match(capturedUrl, new RegExp(`text=${encodeURIComponent('もっと動画見たい')}`));
+});
+
+test('fetchFavorites は candidateStatuses も整形して返す', async () => {
+  globalThis.fetch = async () => ({
+    ok: true, status: 200,
+    json: async () => ({ candidateStatuses: { 木場大輔: { status: '検討中' } } }),
+  });
+  const result = await fetchFavorites('https://example.com/exec', 'pass1');
+  assert.deepEqual(result.candidateStatuses, { 木場大輔: { status: '検討中' } });
+});
+
+test('setCandidateStatus は action=setCandidateStatus とartist/statusを送る', async () => {
+  let capturedUrl;
+  globalThis.fetch = async (url) => {
+    capturedUrl = url.toString();
+    return { ok: true, status: 200, json: async () => ({ ok: true }) };
+  };
+  await setCandidateStatus('https://example.com/exec', 'pass1', 'アラタ', '木場大輔', '採用');
+  assert.match(capturedUrl, /action=setCandidateStatus/);
+  assert.match(capturedUrl, new RegExp(`artist=${encodeURIComponent('木場大輔')}`));
+  assert.match(capturedUrl, new RegExp(`status=${encodeURIComponent('採用')}`));
 });

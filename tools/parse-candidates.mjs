@@ -5,8 +5,9 @@ const FIELD_MAP = {
   'URL': 'url',
   '推薦理由': 'reason',
   '確認状況': 'status',
+  '拠点区分': 'origin',
 };
-const EMPTY = { category: '', size: '', skills: '', url: '', reason: '', status: '' };
+const EMPTY = { category: '', size: '', skills: '', url: '', reason: '', status: '', origin: '' };
 
 export function parseCandidates(mdText, fileName = '') {
   const dateMatch = (fileName + '\n' + mdText).match(/(\d{4}-\d{2}-\d{2})/);

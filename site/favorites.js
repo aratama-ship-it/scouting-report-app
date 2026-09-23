@@ -15,7 +15,17 @@ export async function fetchFavorites(gasUrl, passphrase) {
     favorites: body.favorites || [],
     comments: body.comments || [],
     requests: body.requests || [],
+    candidateStatuses: body.candidateStatuses || {},
   };
+}
+
+// 候補の選考ステータス。artist(候補名)ごとに1件（上書き式）。
+export const CANDIDATE_STATUSES = ['未確認', '検討中', '連絡済み', '採用', '保留', '見送り'];
+
+export async function setCandidateStatus(gasUrl, passphrase, myName, artist, status, note) {
+  await callGas(gasUrl, 'setCandidateStatus', {
+    passphrase, name: myName || '', artist, status, note: note || '',
+  });
 }
 
 export async function toggleFavorite(gasUrl, passphrase, name, artist) {

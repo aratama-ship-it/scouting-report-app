@@ -23,6 +23,7 @@ const SAMPLE = `# 新規候補リスト 2026-07-06（週次スカウティング
 - URL: https://example.com/gekko
 - 推薦理由: 屋外火・屋内LED両対応。
 - 確認状況: 公式サイトあり。
+- 拠点区分: 海外
 `;
 
 test('見出しごとに候補を抽出する', () => {
@@ -32,7 +33,9 @@ test('見出しごとに候補を抽出する', () => {
   assert.equal(items[0].name, 'カゲロウ（Kagerou）');
   assert.equal(items[0].category, 'Other（Magician / Illusionist）');
   assert.equal(items[0].url, 'https://example.com/kagerou');
+  assert.equal(items[0].origin, '');
   assert.equal(items[1].size, '5+（推定、要確認）');
+  assert.equal(items[1].origin, '海外');
 });
 
 test('番号なし見出しでも名前が取れる', () => {

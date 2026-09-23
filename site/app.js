@@ -1,12 +1,15 @@
 import { decryptEnvelope } from './crypto.js';
 import { findRelated } from './related.js';
-import { fetchFavorites, toggleFavorite, addComment, requestUpdate, getNickname, setNickname } from './favorites.js';
+import {
+  fetchFavorites, toggleFavorite, addComment, requestUpdate, getNickname, setNickname,
+  setCandidateStatus, CANDIDATE_STATUSES,
+} from './favorites.js';
 import { GAS_URL } from './favorites-config.js';
 
 let DATA = null;
 let ENVELOPE = null;
 let PASSPHRASE = null;
-let FAVORITES = { favorites: [], comments: [], requests: [] };
+let FAVORITES = { favorites: [], comments: [], requests: [], candidateStatuses: {} };
 let favError = null;
 const $ = (sel) => document.querySelector(sel);
 const PASS_KEY = 'scout_pass';
@@ -23,6 +26,12 @@ export function el(tag, attrs = {}, ...children) {
     node.append(c instanceof Node ? c : String(c));
   }
   return node;
+}
+
+// 候補mdの推薦理由・スキルにある **強調** を<strong>に変換する（elはtextノード化するのでXSS安全）
+export function mdBold(text) {
+  return String(text ?? '').split(/\*\*(.+?)\*\*/g).map((part, i) => (
+    i % 2 === 1 ? el('strong', {}, part) : part));
 }
 
 export function link(url, label) {
@@ -254,26 +263,124 @@ async function renderDetail(name) {
     relatedSection);
 }
 
-function renderCandidates() {
+const candidatesState = { origin: '' };
+const STATUS_SLUG = {
+  '未確認': 'unconfirmed', '検討中': 'considering', '連絡済み': 'contacted',
+  '採用': 'adopted', '保留': 'hold', '見送り': 'declined',
+};
+
+function candidateCard(c, rosterNames) {
+  const currentStatus = FAVORITES.candidateStatuses[c.name]?.status || '未確認';
+  const myName = getNickname();
+  const favCount = FAVORITES.favorites.filter((f) => f.artist === c.name).length;
+  const iAmFavorited = FAVORITES.favorites.some((f) => f.artist === c.name && f.name === myName);
+  const commentCount = FAVORITES.comments.filter((cm) => cm.artist === c.name).length;
+
+  const statusSelect = el('select',
+    { class: `status-select status-${STATUS_SLUG[currentStatus] || 'unconfirmed'}` },
+    CANDIDATE_STATUSES.map((s) => el('option', { value: s }, s)));
+  statusSelect.value = currentStatus;
+  statusSelect.addEventListener('change', async () => {
+    const next = statusSelect.value;
+    statusSelect.disabled = true;
+    try {
+      await setCandidateStatus(GAS_URL, PASSPHRASE, ensureNickname(), c.name, next);
+      await loadFavorites();
+      renderCandidatesList();
+    } catch {
+      statusSelect.disabled = false;
+      statusSelect.value = currentStatus;
+    }
+  });
+
+  const favBtn = el('button', {
+    type: 'button', class: 'fav-btn' + (iAmFavorited ? ' fav-active' : ''),
+  }, `${iAmFavorited ? '★' : '☆'} ${favCount}`);
+  favBtn.addEventListener('click', async () => {
+    favBtn.disabled = true;
+    try {
+      await toggleFavorite(GAS_URL, PASSPHRASE, ensureNickname(), c.name);
+      await loadFavorites();
+      renderCandidatesList();
+    } catch {
+      favBtn.disabled = false;
+    }
+  });
+
+  const commentBtn = el('button', { type: 'button', class: 'request-btn' }, `💬 ${commentCount}`);
+  commentBtn.addEventListener('click', async () => {
+    const text = (prompt(`Comment on ${c.name}`) || '').trim();
+    if (!text) return;
+    commentBtn.disabled = true;
+    try {
+      await addComment(GAS_URL, PASSPHRASE, ensureNickname(), c.name, text);
+      await loadFavorites();
+      renderCandidatesList();
+    } catch {
+      commentBtn.disabled = false;
+    }
+  });
+
+  return el('div', { class: 'card' },
+    el('h3', {},
+      c.name, ' ',
+      el('span', { class: 'tag' }, c.category),
+      el('span', { class: 'tag' }, c.origin || '国内'),
+      rosterNames.has(c.name)
+        ? el('span', { class: 'tag diff-added' }, 'Added to roster')
+        : el('span', { class: 'tag' }, 'Not yet added')),
+    el('div', { class: 'muted' }, mdBold(c.skills), c.size ? ` / Size: ${c.size}` : ''),
+    c.reason ? el('div', { class: 'muted' }, '💡 ', mdBold(c.reason)) : '',
+    c.status ? el('div', { class: 'muted' }, '✔️ ', mdBold(c.status)) : '',
+    el('div', { class: 'links' }, link(c.url, 'Official site')),
+    el('div', { class: 'fav-row' }, statusSelect, favBtn, commentBtn));
+}
+
+function renderCandidatesList() {
   if (DATA.candidates.length === 0) {
     $('#view').replaceChildren(el('p', { class: 'muted' }, 'No candidate data yet'));
     return;
   }
   const rosterNames = new Set(DATA.roster.performers.map((p) => p.name));
-  $('#view').replaceChildren(...DATA.candidates.flatMap((week) => [
-    el('h2', { class: 'muted' }, `New candidates as of ${week.date} (${week.items.length})`),
-    ...week.items.map((c) => el('div', { class: 'card' },
-      el('h3', {},
-        c.name, ' ',
-        el('span', { class: 'tag' }, c.category),
-        rosterNames.has(c.name)
-          ? el('span', { class: 'tag diff-added' }, 'Added to sheet')
-          : el('span', { class: 'tag' }, 'Not yet added')),
-      el('div', { class: 'muted' }, c.skills + (c.size ? ` / Size: ${c.size}` : '')),
-      c.reason ? el('div', { class: 'muted' }, `💡 ${c.reason}`) : '',
-      c.status ? el('div', { class: 'muted' }, `✔️ ${c.status}`) : '',
-      el('div', { class: 'links' }, link(c.url, 'Official site')))),
-  ]));
+
+  const origins = ['', '国内', '海外'];
+  const toggle = el('div', { class: 'origin-toggle' },
+    origins.map((o) => {
+      const btn = el('button', {
+        type: 'button',
+        class: 'origin-pill' + (candidatesState.origin === o ? ' active' : ''),
+      }, o === '' ? 'All' : o);
+      btn.addEventListener('click', () => {
+        candidatesState.origin = o;
+        renderCandidatesList();
+      });
+      return btn;
+    }));
+
+  const sections = DATA.candidates.flatMap((week) => {
+    const items = week.items.filter(
+      (c) => !candidatesState.origin || (c.origin || '国内') === candidatesState.origin);
+    if (items.length === 0) return [];
+    return [
+      el('h2', { class: 'muted' }, `New candidates as of ${week.date} (${items.length})`),
+      ...items.map((c) => candidateCard(c, rosterNames)),
+    ];
+  });
+
+  $('#view').replaceChildren(
+    favError ? el('p', { class: 'error' }, favError) : '',
+    toggle,
+    ...(sections.length ? sections : [el('p', { class: 'muted' }, 'No candidates for this filter')]));
+}
+
+async function renderCandidates() {
+  if (DATA.candidates.length === 0) {
+    $('#view').replaceChildren(el('p', { class: 'muted' }, 'No candidate data yet'));
+    return;
+  }
+  $('#view').replaceChildren(el('p', { class: 'muted' }, 'Loading…'));
+  await loadFavorites();
+  renderCandidatesList();
 }
 function renderHistory() {
   if (DATA.history.length === 0) {
