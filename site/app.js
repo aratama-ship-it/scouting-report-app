@@ -50,9 +50,12 @@ function performerCard(p, { clickable = false, onClick, extraClass = '', favMark
       favMarked ? el('span', { class: 'fav-mark' }, '★') : '',
       p.name, ' ',
       el('span', { class: 'tag' }, p.base || 'Uncategorized'),
-      p.size && p.size !== '1' ? el('span', { class: 'tag' }, `${p.size} members`) : ''),
-    el('div', { class: 'muted' }, p.skills),
-    p.note ? el('div', { class: 'muted' }, `📝 ${p.note}`) : '',
+      p.size && p.size !== '1' ? el('span', { class: 'tag' }, `${p.size} members`) : '',
+      p.pendingAdoption
+        ? el('span', { class: 'tag diff-added', title: 'Adopted from Candidates. Becomes a permanent roster row at the next weekly snapshot.' }, 'Adopted (pending snapshot)')
+        : ''),
+    el('div', { class: 'muted' }, mdBold(p.skills)),
+    p.note ? el('div', { class: 'muted' }, '📝 ', mdBold(p.note)) : '',
     el('div', { class: 'links' },
       link(p.instagram, 'Instagram'),
       link(p.youtube, 'YouTube'),
@@ -103,12 +106,45 @@ function openDetail(name) {
   renderRoster();
 }
 
+// 候補カテゴリ文字列（例: "Musician（Whistling / 口笛）"）から名簿Base列相当の短い区分を取り出す。
+// tools/write-snapshot.mjs の shortCategory と同じロジック（Node/ブラウザで別ファイルのため重複させている）。
+function shortCategory(category) {
+  const m = /^(.*?)[（(]/.exec(category || '');
+  return (m ? m[1] : category || '').trim() || 'Other';
+}
+
+function candidateAsPerformer(c) {
+  return {
+    name: c.name, size: c.size || '1', base: shortCategory(c.category), skills: c.skills,
+    instagram: '', youtube: '', contact: c.url || '', note: c.reason || '', pendingAdoption: true,
+  };
+}
+
+// 名簿本体 ＋ ステータスが「採用」になった候補（まだ週次スナップショットに昇格していないもの）を
+// 合わせた表示用の一覧。次回の週次実行(tools/promote-candidates.mjs)を待たずに名簿へ出す
+// （2026-09-24、ユーザー指示: 「昇格させた時点で出る」の待ちを省く）。
+function effectiveRoster() {
+  const existingNames = new Set(DATA.roster.performers.map((p) => p.name));
+  const seen = new Set();
+  const adopted = [];
+  // DATA.candidatesは新しい週が先頭（build-data.mjs）。tools/promote-candidates.mjsは
+  // 初出週（古い方）のデータを採用するため、ここも古い週から辿って揃える。
+  for (const week of [...DATA.candidates].reverse()) {
+    for (const c of week.items) {
+      if (seen.has(c.name) || existingNames.has(c.name)) { seen.add(c.name); continue; }
+      seen.add(c.name);
+      if (FAVORITES.candidateStatuses[c.name]?.status === '採用') adopted.push(candidateAsPerformer(c));
+    }
+  }
+  return adopted.length ? [...DATA.roster.performers, ...adopted] : DATA.roster.performers;
+}
+
 function renderRoster() {
   if (rosterState.selected) {
     renderDetail(rosterState.selected);
     return;
   }
-  const performers = DATA.roster.performers;
+  const performers = effectiveRoster();
   const bases = [...new Set(performers.map((p) => p.base).filter(Boolean))].sort();
 
   const count = el('p', { class: 'muted' });
@@ -144,7 +180,7 @@ function renderRoster() {
   update();
 }
 async function renderDetail(name) {
-  const target = DATA.roster.performers.find((p) => p.name === name);
+  const target = effectiveRoster().find((p) => p.name === name);
   if (!target) {
     rosterState.selected = null;
     renderRoster();
